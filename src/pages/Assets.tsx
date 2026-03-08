@@ -264,7 +264,6 @@ export default function Assets() {
           onUsePrompt={handleUsePrompt}
           onReEdit={handleReEdit}
           onReGenerate={handleReGenerate}
-          onDownload={handleDelete}
           onLocate={handleLocate}
           onDelete={handleDelete}
         />

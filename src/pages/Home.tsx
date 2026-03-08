@@ -1049,40 +1049,45 @@ export default function Home() {
 
       {deleteConfirmTask && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150" onClick={() => setDeleteConfirmTask(null)}>
-          <div className="bg-card border border-border/50 rounded-xl p-5 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-start justify-between mb-3">
+          <div className="bg-card border border-border/50 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
+            {/* Header row */}
+            <div className="flex items-start justify-between gap-3 mb-4">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
                   <AlertTriangle className="w-4 h-4 text-destructive" />
                 </div>
                 <div>
                   <p className="text-sm font-medium">删除任务</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">选择从队列移除（资产库仍保留）或移至最近删除</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 whitespace-nowrap">选择从队列移除（资产库仍保留）或移至最近删除</p>
                 </div>
               </div>
               {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages?.length > 0 && (
                 <button
-                  className="inline-flex items-center gap-1 text-[11px] text-destructive/70 hover:text-destructive transition-colors shrink-0 ml-2 mt-1"
+                  className="inline-flex items-center gap-1 shrink-0 text-[11px] px-2 py-1 rounded-md border border-destructive/30 bg-destructive/10 text-destructive hover:bg-destructive/20 transition-colors"
                   onClick={confirmDeleteToTrash}
                 >
                   <Trash2 className="w-3 h-3" />
-                  最近删除
+                  移至最近删除
                 </button>
               )}
             </div>
-            {/* Show task thumbnails instead of prompt */}
+            {/* Thumbnails - adaptive */}
             {deleteConfirmTask.generatedImages && deleteConfirmTask.generatedImages.length > 0 ? (
-              <div className="flex flex-wrap gap-1.5 mb-4 bg-muted/20 rounded-lg p-2.5">
+              <div className="flex flex-wrap gap-2 mb-4 bg-muted/20 rounded-lg p-3">
                 {deleteConfirmTask.generatedImages.map((img, i) => {
                   const thumb = deleteConfirmTask.thumbnails?.[i] || img;
                   const src = thumb.startsWith("data:") || thumb.startsWith("http") ? thumb : `data:image/png;base64,${thumb}`;
+                  const count = deleteConfirmTask.generatedImages.length;
                   return (
                     <img
                       key={i}
                       src={src}
                       alt=""
-                      className="rounded-md object-cover"
-                      style={{ width: deleteConfirmTask.generatedImages.length === 1 ? "100%" : "calc(50% - 3px)", maxHeight: 120 }}
+                      className="rounded-md object-contain bg-black/20"
+                      style={{
+                        width: count === 1 ? "100%" : `calc(50% - 4px)`,
+                        maxHeight: count === 1 ? 280 : 180,
+                      }}
                     />
                   );
                 })}
@@ -1092,6 +1097,7 @@ export default function Home() {
                 生成失败的任务将被直接删除
               </p>
             ) : null}
+            {/* Action buttons */}
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"

@@ -105,8 +105,13 @@ export class DesktopStorage implements StorageAdapter {
     }
 
     // Return local-file:// URLs for secure local display via custom protocol
-    const originalUrl = `local-file://${originalPath}`;
-    const thumbnailUrl = `local-file://${thumbPath}`;
+    // Use standard URL format: local-file://serve/<absolute-path>
+    const normalizedOriginal = originalPath.replace(/\\/g, "/");
+    const normalizedThumb = thumbPath.replace(/\\/g, "/");
+    const originalUrl = `local-file://serve/${normalizedOriginal}`;
+    const thumbnailUrl = `local-file://serve/${normalizedThumb}`;
+
+    console.log("[DesktopStorage] Saved image:", { id, originalUrl, thumbnailUrl });
 
     return { id, originalUrl, thumbnailUrl, mimeType, size: blob.size };
   }
@@ -124,7 +129,7 @@ export class DesktopStorage implements StorageAdapter {
     const base64 = await blobToBase64(blob);
     await electronAPI.fsWriteFile(filePath, base64);
 
-    return `local-file://${filePath}`;
+    return `local-file://serve/${filePath.replace(/\\/g, "/")}`;
   }
 
   async downloadImage(imageUrl: string, filename: string): Promise<void> {
@@ -147,9 +152,12 @@ export class DesktopStorage implements StorageAdapter {
   private async _saveToDir(imageUrl: string, dir: string, filename: string): Promise<void> {
     const filePath = `${dir}/${filename}`;
 
-    if (imageUrl.startsWith("local-file://") || imageUrl.startsWith("file://")) {
-      // Local file - read and copy
-      const localPath = imageUrl.replace("local-file://", "").replace("file://", "");
+    if (imageUrl.startsWith("local-file://")) {
+      // Local file - extract path from URL: local-file://serve/C:/path
+      const parsed = new URL(imageUrl);
+      let localPath = decodeURIComponent(parsed.pathname);
+      // On Windows remove leading /
+      if (localPath.startsWith("/") && localPath[2] === ":") localPath = localPath.slice(1);
       const base64 = await electronAPI.fsReadFile(localPath);
       if (base64) {
         await electronAPI.fsWriteFile(filePath, base64);

@@ -17,7 +17,7 @@ protocol.registerSchemesAsPrivileged([
       bypassCSP: true,
       stream: true,
       supportFetchAPI: true,
-      standard: false,
+      standard: true,
       secure: true,
       corsEnabled: true,
     },
@@ -112,15 +112,26 @@ app.on("second-instance", () => {
 
 app.whenReady().then(() => {
   // Register custom protocol handler to serve local files
+  // URL format: local-file://serve/<absolute-path>
   protocol.handle("local-file", (request) => {
     try {
-      let filePath = decodeURIComponent(request.url.replace("local-file://", ""));
-      // Remove leading slash on Windows paths like /C:/...
-      if (process.platform === "win32" && filePath.startsWith("/") && filePath[2] === ":") {
+      const rawUrl = request.url;
+      console.log("[local-file] Request URL:", rawUrl);
+      
+      // Parse as standard URL: local-file://serve/C:/Users/path/file.png
+      const parsed = new URL(rawUrl);
+      // pathname will be /C:/Users/path/file.png
+      let filePath = decodeURIComponent(parsed.pathname);
+      
+      // On Windows, pathname starts with /C:/ - remove leading slash
+      if (process.platform === "win32" && /^\/[A-Za-z]:/.test(filePath)) {
         filePath = filePath.slice(1);
       }
-      // Normalize path separators
+      
+      // Convert forward slashes to OS path separators
       filePath = filePath.replace(/\//g, path.sep);
+      
+      console.log("[local-file] Resolved path:", filePath);
       
       if (!fs.existsSync(filePath)) {
         console.error("[local-file] File not found:", filePath);
@@ -132,9 +143,14 @@ app.whenReady().then(() => {
       const mimeTypes = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
       const contentType = mimeTypes[ext] || "application/octet-stream";
       
+      console.log("[local-file] Serving:", filePath, "type:", contentType, "size:", data.length);
+      
       return new Response(data, {
         status: 200,
-        headers: { "Content-Type": contentType },
+        headers: { 
+          "Content-Type": contentType,
+          "Cache-Control": "max-age=3600",
+        },
       });
     } catch (e) {
       console.error("[local-file] Error:", e);

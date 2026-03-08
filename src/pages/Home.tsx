@@ -585,9 +585,8 @@ export default function Home() {
       await new Promise((r) => setTimeout(r, 300));
       updateTask(taskId, { status: "generating", statusDetail: "已发送至 API，等待模型响应..." });
 
-      const res = await apiRequest("POST", "/api/generate", bodyToSend, getCustomApiHeaders());
+      const data = await callGenerateApi(bodyToSend);
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
-      const data = await res.json();
 
       if (data.error) {
         updateTask(taskId, { status: "error", error: data.error, completedAt: Date.now() });

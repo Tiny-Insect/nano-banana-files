@@ -477,7 +477,7 @@ export default function Home() {
     try {
       toast({ title: "正在上传参考图..." });
       const { url, preview } = await uploadImageToStorage(file);
-      setReferenceImagePreviews((prev) => [...prev, preview]);
+      setReferenceImagePreviews((prev) => [...prev, url]);
       setReferenceImages((prev) => [...prev, url]);
     } catch (err: any) {
       toast({ title: err.message || "上传失败", variant: "destructive" });

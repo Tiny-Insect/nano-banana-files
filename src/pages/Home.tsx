@@ -7,7 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { getStorage } from "@/lib/storage-factory";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
-import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
+import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain, CornerDownLeft } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
 
@@ -235,7 +235,7 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   );
 }
 
-function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, onReGenerate, onDelete }: {
+function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, onReGenerate, onDelete, onAddGeneratedAsRef }: {
   task: GenerationTask;
   onUsePrompt: (p: string) => void;
   onUseRefImage: (preview: string, base64: string, event?: any) => void;
@@ -243,6 +243,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   onReEdit: (task: GenerationTask) => void;
   onReGenerate: (task: GenerationTask) => void;
   onDelete: (task: GenerationTask) => void;
+  onAddGeneratedAsRef: (originalUrl: string, event?: React.MouseEvent) => void;
 }) {
   const downloadImage = async (url: string, index: number) => {
     const s = loadSettings();
@@ -267,6 +268,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const modelLabel = MODEL_LABELS[task.model] || task.model;
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div id={`task-${task.id}`} className="mb-6 max-w-4xl transition-all duration-500">
       <div className="flex items-start gap-3 mb-3">
         {task.referenceImagePreviews.length > 0 && (
@@ -381,14 +383,32 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                   onClick={() => onClickImage(src)}
                 />
                 <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="w-7 h-7"
-                    onClick={(e) => { e.stopPropagation(); downloadImage(src, i); }}
-                  >
-                    <Download className="w-3 h-3" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="w-7 h-7"
+                        onClick={(e) => { e.stopPropagation(); onAddGeneratedAsRef(src, e); }}
+                      >
+                        <CornerDownLeft className="w-3 h-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><span className="text-xs">引用图片</span></TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="w-7 h-7"
+                        onClick={(e) => { e.stopPropagation(); downloadImage(src, i); }}
+                      >
+                        <Download className="w-3 h-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><span className="text-xs">下载</span></TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             );
@@ -422,10 +442,11 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
         </div>
       )}
     </div>
+    </TooltipProvider>
   );
 }
 
-function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
+function Lightbox({ src, onClose, onDownload }: { src: string; onClose: () => void; onDownload: (url: string) => void }) {
   const [visible, setVisible] = useState(false);
   useEffect(() => {
     requestAnimationFrame(() => setVisible(true));
@@ -439,12 +460,20 @@ function Lightbox({ src, onClose }: { src: string; onClose: () => void }) {
       className={`fixed inset-0 z-[100] flex items-center justify-center cursor-pointer transition-all duration-200 ${visible ? "bg-black/80 backdrop-blur-sm" : "bg-black/0"}`}
       onClick={handleClose}
     >
-      <img
-        src={src}
-        alt="放大预览"
-        className={`max-w-[90vw] max-h-[90vh] object-contain rounded-lg shadow-2xl transition-all duration-300 ease-out ${visible ? "scale-100 opacity-100" : "scale-90 opacity-0"}`}
-        onClick={(e) => e.stopPropagation()}
-      />
+      <div className={`flex flex-col items-center gap-3 transition-all duration-300 ease-out ${visible ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} onClick={(e) => e.stopPropagation()}>
+        <img
+          src={src}
+          alt="放大预览"
+          className="max-w-[90vw] max-h-[82vh] object-contain rounded-lg shadow-2xl"
+        />
+        <button
+          onClick={() => onDownload(src)}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-sm font-medium backdrop-blur-md transition-all duration-200 border border-white/10"
+        >
+          <Download className="w-4 h-4" />
+          下载原图
+        </button>
+      </div>
       <button
         onClick={handleClose}
         className={`absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
@@ -898,6 +927,20 @@ export default function Home() {
                   onReEdit={handleReEdit}
                   onReGenerate={handleReGenerate}
                   onDelete={handleDeleteTask}
+                  onAddGeneratedAsRef={(originalUrl, event) => {
+                    if (referenceImages.length >= 10) {
+                      toast({ title: "最多上传10张参考图", variant: "destructive" });
+                      return;
+                    }
+                    if (event) {
+                      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+                      setFlyingImage({ src: originalUrl, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+                      setTimeout(() => setFlyingImage(null), 500);
+                    }
+                    setReferenceImagePreviews((prev) => [...prev, originalUrl]);
+                    setReferenceImages((prev) => [...prev, originalUrl]);
+                    toast({ title: "已添加为参考图" });
+                  }}
                 />
               ))}
               <div ref={feedEndRef} />
@@ -1217,7 +1260,16 @@ export default function Home() {
       `}</style>
 
       {lightboxImage && (
-        <Lightbox src={lightboxImage} onClose={() => setLightboxImage(null)} />
+        <Lightbox
+          src={lightboxImage}
+          onClose={() => setLightboxImage(null)}
+          onDownload={(url) => {
+            const s = loadSettings();
+            const prefix = s.downloadPrefix || "LumenDust";
+            const storage = getStorage();
+            storage.downloadImage(url, `${prefix}-${Date.now()}`).catch(() => window.open(url, "_blank"));
+          }}
+        />
       )}
     </Layout>
   );

@@ -752,10 +752,10 @@ export default function Home() {
         </div>
 
         {!isAtBottom && tasks.length > 0 && (
-          <div className="flex justify-center pb-2">
+          <div className="flex justify-center pb-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <button
               onClick={scrollToBottom}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium shadow-lg hover:bg-primary transition-colors animate-in fade-in slide-in-from-bottom-2 duration-200"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium shadow-lg hover:bg-primary transition-colors"
             >
               <ArrowDown className="w-3 h-3" />
               回到底部

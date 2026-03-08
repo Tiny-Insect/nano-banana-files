@@ -59,18 +59,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col relative z-[1]">
       <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
-          <span className="select-none pointer-events-none" style={{ fontFamily: "'Dancing Script', cursive", fontSize: "24px", fontWeight: 700, lineHeight: 1 }}>LumenDust</span>
+          <span className="select-none pointer-events-none" style={{ fontFamily: "'Dancing Script', cursive", fontSize: "28px", fontWeight: 700, lineHeight: 1 }}>LumenDust</span>
           <div className="flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>
                 <button
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     location.pathname === item.path
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground"
                   }`}
                 >
-                  <item.icon className="w-3.5 h-3.5" />
+                  <item.icon className="w-4 h-4" />
                   {item.label}
                 </button>
               </Link>
@@ -81,16 +81,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               className="relative w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors overflow-hidden"
               title={dark ? "切换亮色模式" : "切换暗色模式"}
             >
-              <Sun className={`w-3.5 h-3.5 absolute transition-all duration-300 ease-in-out ${dark ? "opacity-0 rotate-90 scale-0" : "opacity-100 rotate-0 scale-100"}`} />
-              <Moon className={`w-3.5 h-3.5 absolute transition-all duration-300 ease-in-out ${dark ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0"}`} />
+              <Sun className={`w-4 h-4 absolute transition-all duration-300 ease-in-out ${dark ? "opacity-0 rotate-90 scale-0" : "opacity-100 rotate-0 scale-100"}`} />
+              <Moon className={`w-4 h-4 absolute transition-all duration-300 ease-in-out ${dark ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0"}`} />
             </button>
 
             <Popover>
               <PopoverTrigger asChild>
                 <button
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-muted-foreground hover:text-foreground"
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors text-muted-foreground hover:text-foreground"
                 >
-                  <Settings className="w-3.5 h-3.5" />
+                  <Settings className="w-4 h-4" />
                   设置
                 </button>
               </PopoverTrigger>

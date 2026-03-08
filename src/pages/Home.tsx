@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
-import { X, Loader2, Download, ImageIcon, Sparkles, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
+import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
 
 function getCustomApiHeaders(): Record<string, string> {

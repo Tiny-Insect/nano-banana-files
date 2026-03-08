@@ -34,11 +34,9 @@ export function getStorage(): StorageAdapter {
   if (_instance) return _instance;
 
   if (isElectron() || isTauri()) {
-    // When desktop is implemented, uncomment:
-    // _instance = new DesktopStorage();
-    // For now, fall back to web
-    console.info("[Storage] Desktop environment detected but not yet implemented, using web storage");
-    _instance = new WebStorage();
+    _instance = new DesktopStorage();
+    console.info("[Storage] Using desktop storage (local filesystem)");
+  } else {
   } else {
     _instance = new WebStorage();
   }

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { resolveImageSrc, formatDate } from "@/lib/format";
 import { downloadOriginalImage } from "@/lib/api";
+import { triggerDownloadNotification } from "@/components/DownloadNotification";
 import type { GenerationTask } from "@/lib/generation-store";
 
 const MODEL_LABELS: Record<string, string> = {

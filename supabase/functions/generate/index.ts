@@ -169,15 +169,20 @@ serve(async (req) => {
         );
       }
 
+      // Map resolution to imageSize
+      const imageSizeMap: Record<string, string> = { "1k": "1K", "2k": "2K", "4k": "4K" };
+      const imageSize = imageSizeMap[resolution] || "2K";
+
       requestBody = {
         contents: [{ parts }],
         generationConfig: {
           responseModalities: ["TEXT", "IMAGE"],
+          imageConfig: {
+            imageSize,
+            ...(aspect_ratio ? { aspectRatio: aspect_ratio } : {}),
+          },
         },
       };
-      if (aspect_ratio) {
-        requestBody.generationConfig.imageConfig = { aspectRatio: aspect_ratio };
-      }
 
       reqHeaders = {
         "Content-Type": "application/json",

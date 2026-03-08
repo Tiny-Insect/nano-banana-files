@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
+import { supabase } from "@/integrations/supabase/client";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
 import { X, Loader2, Download, ImageIcon, Sparkles, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info } from "lucide-react";
@@ -15,6 +15,16 @@ function getCustomApiHeaders(): Record<string, string> {
   if (s.customApiUrl.trim()) headers["X-Custom-Api-Url"] = s.customApiUrl.trim();
   if (s.customApiKey.trim()) headers["X-Custom-Api-Key"] = s.customApiKey.trim();
   return headers;
+}
+
+async function callGenerateApi(body: Record<string, any>): Promise<any> {
+  const customHeaders = getCustomApiHeaders();
+  const { data, error } = await supabase.functions.invoke("generate", {
+    body,
+    headers: customHeaders,
+  });
+  if (error) throw error;
+  return data;
 }
 
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
@@ -464,9 +474,8 @@ export default function Home() {
       await new Promise((r) => setTimeout(r, 300));
       updateTask(taskId, { status: "generating", statusDetail: "已发送至 API，等待模型响应..." });
 
-      const res = await apiRequest("POST", "/api/generate", bodyToSend, getCustomApiHeaders());
+      const data = await callGenerateApi(bodyToSend);
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
-      const data = await res.json();
 
       if (data.error) {
         updateTask(taskId, { status: "error", error: data.error, completedAt: Date.now() });
@@ -576,9 +585,8 @@ export default function Home() {
       await new Promise((r) => setTimeout(r, 300));
       updateTask(taskId, { status: "generating", statusDetail: "已发送至 API，等待模型响应..." });
 
-      const res = await apiRequest("POST", "/api/generate", bodyToSend, getCustomApiHeaders());
+      const data = await callGenerateApi(bodyToSend);
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
-      const data = await res.json();
 
       if (data.error) {
         updateTask(taskId, { status: "error", error: data.error, completedAt: Date.now() });

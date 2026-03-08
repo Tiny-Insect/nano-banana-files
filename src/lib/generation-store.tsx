@@ -45,13 +45,25 @@ function saveTasks(tasks: GenerationTask[]) {
     const toSave = tasks.slice(-20).map((t) => ({
       ...t,
       referenceImageBase64: [],
+      referenceImagePreviews: [],
+      generatedImages: t.generatedImages?.map((img) =>
+        img.length > 50000 ? "" : img
+      ) || [],
     }));
     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(toSave));
   } catch (e) {
-    console.warn("Failed to save tasks to localStorage (likely quota exceeded):", e);
+    console.warn("Failed to save tasks to localStorage:", e);
     try {
-      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(tasks.slice(-5).map(t => ({ ...t, referenceImageBase64: [] }))));
-    } catch {}
+      const minimal = tasks.slice(-5).map(t => ({
+        ...t,
+        referenceImageBase64: [],
+        referenceImagePreviews: [],
+        generatedImages: [],
+      }));
+      localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(minimal));
+    } catch {
+      try { localStorage.removeItem(TASKS_STORAGE_KEY); } catch {}
+    }
   }
 }
 

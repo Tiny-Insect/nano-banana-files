@@ -528,9 +528,9 @@ export default function Assets() {
           </div>
         ) : (
           <div
-            className="grid gap-3"
             style={{
-              gridTemplateColumns: `repeat(auto-fill, minmax(${colWidth}px, 1fr))`,
+              columnWidth: `${colWidth}px`,
+              columnGap: "12px",
             }}
           >
             {images.map((img) => {
@@ -543,7 +543,8 @@ export default function Assets() {
               return (
                 <div
                   key={img.id}
-                  className="group relative rounded-lg overflow-hidden bg-card/50 border border-border/20 hover:border-primary/30 transition-all duration-300 cursor-pointer"
+                  className="group relative rounded-lg overflow-hidden bg-card/50 border border-border/20 hover:border-primary/30 transition-all duration-300 cursor-pointer mb-3"
+                  style={{ breakInside: "avoid" }}
                   onClick={() => setSelectedImage(img)}
                   onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 16px 2px hsl(var(--primary) / 0.12)"; }}
                   onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "none"; }}

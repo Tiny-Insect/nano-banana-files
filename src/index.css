@@ -191,7 +191,3 @@
   mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
   -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
 }
-.group\/prompt:hover .prompt-fade-mask {
-  mask-image: none;
-  -webkit-mask-image: none;
-}

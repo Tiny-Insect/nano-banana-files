@@ -515,6 +515,7 @@ export default function Home() {
   const [isAtBottom, _setIsAtBottom] = useState(true);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
+  const [showClearFailedConfirm, setShowClearFailedConfirm] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const isAtBottomRef = useRef(true);
   const prevTaskCountRef = useRef(tasks.length);

@@ -488,6 +488,7 @@ export default function Home() {
     thinkingLevel, setThinkingLevel,
     tasks, addTask, updateTask, setTasks,
     lightboxImage, setLightboxImage,
+    visibleCount, loadMore, hasMore, clearOldTasks,
   } = store;
 
   const [isAtBottom, setIsAtBottom] = useState(true);

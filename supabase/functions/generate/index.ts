@@ -198,13 +198,7 @@ serve(async (req) => {
     if (web_search) requestBody.web_search = true;
     if (thinking_level) requestBody.thinking_level = thinking_level;
 
-      headers = {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      };
-    }
-
-    console.log("Request:", chatUrl, "model:", apiModel, "isGoogleNative:", isGoogleNative);
+    console.log("Request:", chatUrl, "model:", apiModel, "imageSize:", imageSize);
 
     const response = await fetch(chatUrl, {
       method: "POST",

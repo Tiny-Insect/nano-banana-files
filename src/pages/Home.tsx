@@ -25,13 +25,12 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
   });
   if (error) throw error;
 
-  // Edge Function now streams raw Gemini response.
-  // Extract images and upload to Storage on the client side.
   if (data && data.error) return data;
-  if (data && data.images) return data; // Already processed format (shouldn't happen but safety)
+  if (data && data.images) return data;
 
   // Handle raw Gemini native response
   const images: string[] = [];
+  const thumbnails: string[] = [];
   if (data?.candidates) {
     for (const candidate of data.candidates) {
       if (candidate?.finishReason === "SAFETY") {
@@ -43,25 +42,46 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
           if (imgData?.data) {
             const mimeType = imgData.mimeType || imgData.mime_type || "image/png";
             const dataUrl = `data:${mimeType};base64,${imgData.data}`;
-            // Upload to Storage
             try {
               const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
               const blob = await fetch(dataUrl).then(r => r.blob());
-              const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+              const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+              // Upload original
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('generated-images')
-                .upload(fileName, blob, { contentType: mimeType });
+                .upload(`${baseName}.${ext}`, blob, { contentType: mimeType });
+
               if (!uploadError && uploadData) {
                 const { data: urlData } = supabase.storage
                   .from('generated-images')
                   .getPublicUrl(uploadData.path);
                 images.push(urlData.publicUrl);
+
+                // Create and upload thumbnail
+                try {
+                  const thumbBlob = await createThumbnail(blob, 280);
+                  const { data: thumbUpload, error: thumbErr } = await supabase.storage
+                    .from('generated-images')
+                    .upload(`thumb_${baseName}.jpg`, thumbBlob, { contentType: "image/jpeg" });
+                  if (!thumbErr && thumbUpload) {
+                    const { data: thumbUrl } = supabase.storage
+                      .from('generated-images')
+                      .getPublicUrl(thumbUpload.path);
+                    thumbnails.push(thumbUrl.publicUrl);
+                  } else {
+                    thumbnails.push(urlData.publicUrl); // fallback to original
+                  }
+                } catch {
+                  thumbnails.push(urlData.publicUrl);
+                }
               } else {
-                // Fallback: use data URL directly
                 images.push(dataUrl);
+                thumbnails.push(dataUrl);
               }
             } catch {
               images.push(dataUrl);
+              thumbnails.push(dataUrl);
             }
           }
         }
@@ -69,7 +89,7 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
     }
   }
 
-  if (images.length > 0) return { images };
+  if (images.length > 0) return { images, thumbnails };
   return { error: "未返回图片", raw: data };
 }
 

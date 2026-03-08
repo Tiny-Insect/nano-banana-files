@@ -172,13 +172,15 @@ serve(async (req) => {
         contents: [{ parts: contentParts }],
         generationConfig: {
           responseModalities: ["TEXT", "IMAGE"],
-          ...(aspect_ratio ? {
-            imageGenerationConfig: {
-              aspectRatio: aspect_ratio,
-            },
-          } : {}),
         },
       };
+
+      // Add image config for aspect ratio
+      if (aspect_ratio) {
+        (requestBody as any).generationConfig.imageConfig = {
+          aspectRatio: aspect_ratio,
+        };
+      }
 
       headers = {
         "Content-Type": "application/json",

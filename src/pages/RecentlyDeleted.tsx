@@ -76,15 +76,15 @@ export default function RecentlyDeleted() {
     }, 300);
   }, [setTasks, toast, refreshTrash]);
 
-  const handlePermanentDelete = (taskId: string) => {
-    permanentDelete(taskId);
+  const handlePermanentDelete = async (taskId: string) => {
+    await permanentDelete(taskId);
     refreshTrash();
     setDeleteConfirmTask(null);
     toast({ title: "已永久删除" });
   };
 
-  const handleClearAll = () => {
-    clearAllTrash();
+  const handleClearAll = async () => {
+    await clearAllTrash();
     refreshTrash();
     setClearAllConfirm(false);
     toast({ title: "已清空最近删除" });

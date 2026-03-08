@@ -133,12 +133,25 @@ export class WebStorage implements StorageAdapter {
   }
 
   async deleteImage(imageId: string): Promise<void> {
-    // Best-effort cleanup from Supabase Storage
     try {
       await supabase.storage.from("generated-images").remove([
         `${imageId}.png`, `${imageId}.jpg`, `${imageId}.webp`,
         `thumb_${imageId}.jpg`,
       ]);
+    } catch {
+      // Non-critical
+    }
+  }
+
+  async deleteImageByUrl(imageUrl: string): Promise<void> {
+    // Extract filename from Supabase public URL
+    try {
+      const url = new URL(imageUrl);
+      const parts = url.pathname.split("/");
+      const filename = parts[parts.length - 1];
+      if (filename) {
+        await supabase.storage.from("generated-images").remove([filename]);
+      }
     } catch {
       // Non-critical
     }

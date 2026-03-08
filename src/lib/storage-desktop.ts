@@ -160,11 +160,23 @@ export class DesktopStorage implements StorageAdapter {
 
   async deleteImage(imageId: string): Promise<void> {
     const cacheDir = await getCacheDir();
-    // Try common extensions
     for (const ext of ["png", "jpg", "webp"]) {
       await electronAPI.fsDeleteFile(`${cacheDir}/originals/${imageId}.${ext}`);
     }
     await electronAPI.fsDeleteFile(`${cacheDir}/thumbs/thumb_${imageId}.jpg`);
+  }
+
+  async deleteImageByUrl(imageUrl: string): Promise<void> {
+    if (!imageUrl.startsWith("local-file://")) return;
+    try {
+      const parsed = new URL(imageUrl);
+      let localPath = decodeURIComponent(parsed.pathname);
+      if (localPath.startsWith("/") && localPath[2] === ":") localPath = localPath.slice(1);
+      localPath = localPath.replace(/\//g, "\\");
+      await electronAPI.fsDeleteFile(localPath);
+    } catch {
+      // Best-effort
+    }
   }
 
   async getCacheSize(): Promise<number> {

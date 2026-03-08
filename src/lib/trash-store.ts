@@ -5,6 +5,7 @@
  */
 
 import type { GenerationTask } from "./generation-store";
+import { getStorage } from "./storage-factory";
 
 const TRASH_KEY = "nanobanana_trash";
 const MAX_TRASH = 200;
@@ -66,13 +67,31 @@ export function restoreFromTrash(taskId: string): GenerationTask | null {
   return task as GenerationTask;
 }
 
-/** Permanently delete from trash */
-export function permanentDelete(taskId: string) {
+/** Delete cached image files for a task */
+async function deleteCachedFiles(task: TrashedTask | GenerationTask): Promise<void> {
+  try {
+    const storage = getStorage();
+    const urls = [...(task.generatedImages || []), ...(task.thumbnails || [])];
+    const unique = [...new Set(urls)];
+    await Promise.all(unique.map((url) => storage.deleteImageByUrl(url)));
+  } catch {
+    // Best-effort
+  }
+}
+
+/** Permanently delete from trash (also deletes cached files) */
+export async function permanentDelete(taskId: string): Promise<void> {
   const trash = loadTrash();
+  const task = trash.find((t) => t.id === taskId);
+  if (task) {
+    await deleteCachedFiles(task);
+  }
   saveTrash(trash.filter((t) => t.id !== taskId));
 }
 
-/** Clear all trash */
-export function clearAllTrash() {
+/** Clear all trash (also deletes all cached files) */
+export async function clearAllTrash(): Promise<void> {
+  const trash = loadTrash();
+  await Promise.all(trash.map((t) => deleteCachedFiles(t)));
   localStorage.removeItem(TRASH_KEY);
 }

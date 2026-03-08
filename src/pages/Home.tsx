@@ -409,9 +409,12 @@ export default function Home() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const isAtBottomRef = useRef(true);
   const prevTaskCountRef = useRef(tasks.length);
   const prevLastTaskRef = useRef<string | null>(null);
+  const isPro = model === "nanobanana-pro";
+  const accentActiveClass = isPro ? "text-pro-accent bg-pro-accent/10" : "text-primary bg-primary/10";
 
   useEffect(() => {
     requestAnimationFrame(() => {

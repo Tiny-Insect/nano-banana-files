@@ -48,10 +48,10 @@ function saveTasks(tasks: GenerationTask[]) {
   try {
     const toSave = tasks.slice(-MAX_STORED_TASKS).map((t) => ({
       ...t,
-      referenceImageBase64: (t.referenceImageBase64 || []).filter(img => img.startsWith("http")),
-      referenceImagePreviews: (t.referenceImagePreviews || []).filter(img => img.startsWith("http")),
-      generatedImages: (t.generatedImages || []).filter((img) => img.startsWith("http")),
-      thumbnails: (t.thumbnails || []).filter((img) => img.startsWith("http")),
+      referenceImageBase64: (t.referenceImageBase64 || []).filter(img => img.startsWith("http") || img.startsWith("local-file://")),
+      referenceImagePreviews: (t.referenceImagePreviews || []).filter(img => img.startsWith("http") || img.startsWith("local-file://")),
+      generatedImages: (t.generatedImages || []).filter((img) => img.startsWith("http") || img.startsWith("local-file://")),
+      thumbnails: (t.thumbnails || []).filter((img) => img.startsWith("http") || img.startsWith("local-file://")),
     }));
     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(toSave));
   } catch (e) {

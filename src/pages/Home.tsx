@@ -1017,7 +1017,7 @@ export default function Home() {
                   </Tooltip>
                 </div>
 
-                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3 font-sans tracking-wide">
+                <div className="border-t border-border/15 px-3 sm:px-5 py-2 sm:py-3 flex flex-wrap items-center gap-1.5 sm:gap-3 font-sans tracking-wide">
                   <ModelToggle model={model} onChange={handleModelChange} />
 
                   <span className="w-px h-6 bg-border/20" />

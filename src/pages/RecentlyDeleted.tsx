@@ -52,7 +52,7 @@ export default function RecentlyDeleted() {
 
   const handleDownload = async (url: string, index: number) => {
     const savePath = await downloadOriginalImage(url, index);
-    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
+    triggerDownloadNotification(savePath ? `已保存至「${savePath}」` : "已开始下载");
   };
 
   const handleRestore = useCallback((taskId: string) => {

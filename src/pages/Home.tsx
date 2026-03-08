@@ -890,7 +890,27 @@ export default function Home() {
         <div ref={feedRef} className="flex-1 py-6 pb-48 overflow-y-auto flex flex-col min-h-0 custom-scrollbar">
           {tasks.length > 0 ? (
             <div className="mt-auto">
-              {tasks.map((task) => (
+              {hasMore && (
+                <div className="flex justify-center py-4">
+                  <button
+                    onClick={loadMore}
+                    className="px-4 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/50 transition-colors border border-border/30"
+                  >
+                    加载更早的任务 ({tasks.length - visibleCount} 条隐藏)
+                  </button>
+                </div>
+              )}
+              {tasks.length > 50 && (
+                <div className="flex justify-center pb-2">
+                  <button
+                    onClick={() => { clearOldTasks(30); toast({ title: "已清理旧任务" }); }}
+                    className="px-3 py-1 rounded-md text-[10px] text-muted-foreground/40 hover:text-destructive/70 transition-colors"
+                  >
+                    清理旧缓存 (保留最近30条)
+                  </button>
+                </div>
+              )}
+              {tasks.slice(-visibleCount).map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}

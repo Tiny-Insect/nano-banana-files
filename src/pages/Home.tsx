@@ -543,15 +543,9 @@ export default function Home() {
   }, [aspectRatio, setModel, setAspectRatio]);
 
   const uploadImageToStorage = useCallback(async (file: File): Promise<string> => {
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${file.name.split('.').pop() || 'png'}`;
-    const { data, error } = await supabase.storage
-      .from('reference-images')
-      .upload(fileName, file, { contentType: file.type });
-    if (error) throw new Error(`上传失败: ${error.message}`);
-    const { data: urlData } = supabase.storage
-      .from('reference-images')
-      .getPublicUrl(data.path);
-    return urlData.publicUrl;
+    const storage = getStorage();
+    return storage.saveReferenceImage(file);
+  }, []);
   }, []);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {

@@ -842,7 +842,7 @@ export default function Home() {
                     onClick={handleGenerate}
                     disabled={!canGenerate}
                     size="icon"
-                    className="shrink-0 mt-1 rounded-lg w-10 h-10"
+                    className="shrink-0 mt-1 rounded-lg w-11 h-11"
                   >
                     <Send className="w-4 h-4" />
                   </Button>

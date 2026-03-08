@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ImageIcon, Wand2, Settings, Eye, EyeOff, Check, Sun, Moon, Info } from "lucide-react";
+import { ImageIcon, Wand2, Settings, Eye, EyeOff, Check, Sun, Moon, Info, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { toggleTheme, isDarkMode } from "@/App";

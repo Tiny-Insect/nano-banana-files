@@ -91,6 +91,6 @@ export function getStorageConfig(): StorageConfig {
       downloadFormat: s.downloadFormat || "png",
     };
   } catch {
-    return { downloadPath: "", maxCacheMB: 500, downloadPrefix: "LumenDust", downloadFormat: "png" };
+    return { downloadPath: "", maxCacheMB: null, downloadPrefix: "LumenDust", downloadFormat: "png" };
   }
 }

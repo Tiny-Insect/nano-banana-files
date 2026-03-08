@@ -11,6 +11,7 @@ import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
 import { executeGeneration, downloadOriginalImage } from "@/lib/api";
+import { resolveImageSrc } from "@/lib/format";
 import ImageLightbox from "@/components/ImageLightbox";
 
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
@@ -316,9 +317,9 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
             };
             const adaptiveWidth = ratioWidths[task.aspectRatio] || 180;
             return task.generatedImages.map((img, i) => {
-            const src = img.startsWith("data:") || img.startsWith("http") ? img : `data:image/png;base64,${img}`;
+            const src = resolveImageSrc(img);
             const thumbSrc = task.thumbnails?.[i] || src;
-            const displaySrc = thumbSrc.startsWith("data:") || thumbSrc.startsWith("http") ? thumbSrc : `data:image/png;base64,${thumbSrc}`;
+            const displaySrc = resolveImageSrc(thumbSrc);
             return (
               <div
                 key={i}
@@ -1085,7 +1086,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-2 mb-4 bg-muted/20 rounded-lg p-3">
                 {deleteConfirmTask.generatedImages.map((img, i) => {
                   const thumb = deleteConfirmTask.thumbnails?.[i] || img;
-                  const src = thumb.startsWith("data:") || thumb.startsWith("http") ? thumb : `data:image/png;base64,${thumb}`;
+                  const src = resolveImageSrc(thumb);
                   const count = deleteConfirmTask.generatedImages.length;
                   return (
                     <img

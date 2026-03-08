@@ -82,7 +82,7 @@ export interface StorageConfig {
 export function getStorageConfig(): StorageConfig {
   try {
     const raw = localStorage.getItem("nanobanana_settings");
-    if (!raw) return { downloadPath: "", maxCacheMB: 500, downloadPrefix: "LumenDust", downloadFormat: "png" };
+    if (!raw) return { downloadPath: "", maxCacheMB: null, downloadPrefix: "LumenDust", downloadFormat: "png" };
     const s = JSON.parse(raw);
     return {
       downloadPath: s.downloadPath || "",

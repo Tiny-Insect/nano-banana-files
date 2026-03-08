@@ -103,6 +103,9 @@ serve(async (req) => {
       const imageSizeMap: Record<string, string> = { "1k": "1K", "2k": "2K", "4k": "4K" };
       const imageSize = imageSizeMap[resolution] || "2K";
 
+      // gemini-3-pro-image-preview does NOT support thinkingConfig
+      const supportsThinking = apiModel !== "gemini-3-pro-image-preview";
+
       requestBody = {
         contents: [{ parts }],
         generationConfig: {
@@ -111,13 +114,13 @@ serve(async (req) => {
             imageSize,
             ...(aspect_ratio ? { aspectRatio: aspect_ratio } : {}),
           },
-          ...(thinking_level && thinking_level !== "none" ? {
+          ...(supportsThinking && thinking_level && thinking_level !== "none" ? {
             thinkingConfig: {
               thinkingLevel: thinking_level === "deep" ? "HIGH" : "LOW",
             },
-          } : {
+          } : supportsThinking ? {
             thinkingConfig: { thinkingLevel: "NONE" },
-          }),
+          } : {}),
         },
         ...(web_search ? { tools: [{ googleSearch: {} }] } : {}),
       };

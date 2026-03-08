@@ -78,21 +78,10 @@ export class DesktopStorage implements StorageAdapter {
       electronAPI.fsMkdir(thumbsDir),
     ]);
 
-    // Save original
+    // Save original (no separate thumbnail — use original for display)
     const originalPath = `${originalsDir}/${id}.${ext}`;
     const base64 = await blobToBase64(blob);
     await electronAPI.fsWriteFile(originalPath, base64);
-
-    // Create and save thumbnail
-    let thumbPath = originalPath; // fallback
-    try {
-      const thumbBlob = await createThumbnail(blob, 280);
-      thumbPath = `${thumbsDir}/thumb_${id}.jpg`;
-      const thumbBase64 = await blobToBase64(thumbBlob);
-      await electronAPI.fsWriteFile(thumbPath, thumbBase64);
-    } catch {
-      // Thumbnail creation failed, use original
-    }
 
     // Check cache size and auto-cleanup if needed
     const config = getStorageConfig();

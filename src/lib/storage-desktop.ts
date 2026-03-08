@@ -104,9 +104,9 @@ export class DesktopStorage implements StorageAdapter {
       }
     }
 
-    // Return file:// URLs for local display
-    const originalUrl = `file://${originalPath}`;
-    const thumbnailUrl = `file://${thumbPath}`;
+    // Return local-file:// URLs for secure local display via custom protocol
+    const originalUrl = `local-file://${originalPath}`;
+    const thumbnailUrl = `local-file://${thumbPath}`;
 
     return { id, originalUrl, thumbnailUrl, mimeType, size: blob.size };
   }

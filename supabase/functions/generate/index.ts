@@ -247,6 +247,7 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error("API error:", response.status, errorText.substring(0, 500));
       const friendlyMessages: Record<number, string> = {
+        402: "额度不足，请充值后再试",
         429: "请求过于频繁，请稍等几秒后再试",
         502: "API 服务暂时不可用，请稍后再试",
         503: "API 服务暂时不可用，请稍后再试",

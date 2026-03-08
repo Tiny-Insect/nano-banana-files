@@ -70,7 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       : "text-muted-foreground"
                   }`}
                 >
-                  <item.icon className="w-3.5 h-3.5" />
+                  <item.icon className="w-4 h-4" />
                   {item.label}
                 </button>
               </Link>

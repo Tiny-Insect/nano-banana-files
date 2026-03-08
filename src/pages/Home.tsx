@@ -11,6 +11,7 @@ import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
 import { executeGeneration, downloadOriginalImage } from "@/lib/api";
+import { resolveImageSrc } from "@/lib/format";
 import ImageLightbox from "@/components/ImageLightbox";
 
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {

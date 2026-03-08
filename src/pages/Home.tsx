@@ -864,7 +864,7 @@ export default function Home() {
 
   return (
     <Layout>
-      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 overflow-hidden relative">
+      <div className="flex-1 flex flex-col max-w-5xl mx-auto w-full px-4 overflow-hidden relative">
         <div ref={feedRef} className="flex-1 py-6 pb-48 overflow-y-auto flex flex-col min-h-0 custom-scrollbar">
           {tasks.length > 0 ? (
             <div className="mt-auto">
@@ -925,7 +925,7 @@ export default function Home() {
         <div
           className="fixed bottom-0 left-0 right-0 px-3 sm:px-6 pb-3 sm:pb-5 z-30"
         >
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-5xl mx-auto">
           <TooltipProvider delayDuration={300}>
           <div 
             className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl transition-colors duration-500"

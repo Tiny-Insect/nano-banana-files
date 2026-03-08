@@ -842,10 +842,12 @@ export default function Home() {
       const results = await Promise.allSettled(promises);
 
       const allImages: string[] = [];
+      const allThumbs: string[] = [];
       let lastError = "";
       for (const r of results) {
         if (r.status === "fulfilled" && r.value.images) {
           allImages.push(...r.value.images);
+          allThumbs.push(...(r.value.thumbnails || r.value.images));
         } else if (r.status === "fulfilled" && r.value.error) {
           lastError = r.value.error;
         } else if (r.status === "rejected") {
@@ -856,7 +858,7 @@ export default function Home() {
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
 
       if (allImages.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: allImages, completedAt: Date.now() });
+        updateTask(taskId, { status: "complete", generatedImages: allImages, thumbnails: allThumbs, completedAt: Date.now() });
       } else {
         updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
       }

@@ -224,33 +224,56 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </Button>
 
                   <div className="border-t border-border/30 pt-3">
-                    <p className="text-sm font-medium mb-2">缓存设置</p>
+                    <div className="flex items-center gap-1 mb-2">
+                      <p className="text-sm font-medium">缓存设置</p>
+                      <Popover open={cacheInfoOpen} onOpenChange={setCacheInfoOpen}>
+                        <PopoverTrigger asChild>
+                          <button className="text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors cursor-pointer">
+                            <Info className="w-3 h-3" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-72 p-3 text-xs bg-card/90 backdrop-blur-2xl border-border/40 shadow-2xl relative z-[200]" align="start" side="bottom">
+                          <p className="font-medium mb-2">缓存说明</p>
+                          <div className="space-y-2 text-muted-foreground">
+                            <div>
+                              <p className="font-medium text-foreground/80">🔹 缓存策略</p>
+                              <p className="text-[10px] mt-1">生成的图片会自动缓存缩略图用于快速浏览。原图保存在云端，需要时按需加载。</p>
+                            </div>
+                            <div className="border-t border-border/30 pt-2">
+                              <p className="font-medium text-foreground/80">🔸 清理缓存</p>
+                              <p className="text-[10px] mt-1">清理缓存只删除本地文件副本。任务记录、提示词和云端 URL 会保留，可随时重新加载。</p>
+                            </div>
+                            <div className="border-t border-border/30 pt-2">
+                              <p className="font-medium text-foreground/80">📁 下载路径</p>
+                              <p className="text-[10px] mt-1">网页版由浏览器决定下载位置。桌面 App 版本中可指定保存路径，已下载的文件永远不会被自动清理。</p>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground/60 border-t border-border/30 pt-2">
+                              ⚠️ 最大缓存留空表示不限制。建议桌面端设置合理上限以节省磁盘空间。
+                            </p>
+                          </div>
+                        </PopoverContent>
+                      </Popover>
+                    </div>
                     <div className="space-y-2">
                       <div>
                         <label className="text-xs text-muted-foreground mb-1 block">下载保存路径</label>
                         <input
                           type="text"
-                          value={(settings as any).downloadPath || ""}
-                          onChange={(e) => setSettings({ ...settings, downloadPath: e.target.value } as any)}
-                          placeholder="默认由浏览器决定（桌面端可指定）"
+                          value={settings.downloadPath || ""}
+                          onChange={(e) => setSettings({ ...settings, downloadPath: e.target.value })}
+                          placeholder="留空则由浏览器/系统决定"
                           className="w-full h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 font-mono"
                         />
-                        <p className="text-[10px] text-muted-foreground/40 mt-0.5">
-                          桌面 App 版本中生效，网页版由浏览器下载设置决定
-                        </p>
                       </div>
                       <div>
                         <label className="text-xs text-muted-foreground mb-1 block">最大缓存 (MB)</label>
                         <input
                           type="number"
-                          value={(settings as any).maxCacheMB || 500}
-                          onChange={(e) => setSettings({ ...settings, maxCacheMB: parseInt(e.target.value) || 500 } as any)}
-                          placeholder="500"
+                          value={settings.maxCacheMB ?? ""}
+                          onChange={(e) => setSettings({ ...settings, maxCacheMB: e.target.value ? parseInt(e.target.value) : null })}
+                          placeholder="留空表示无限制"
                           className="w-full h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50"
                         />
-                        <p className="text-[10px] text-muted-foreground/40 mt-0.5">
-                          超过限制将自动清理最早的缓存数据
-                        </p>
                       </div>
                     </div>
                   </div>

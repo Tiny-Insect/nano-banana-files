@@ -593,7 +593,7 @@ export default function Assets() {
                         size="icon"
                         variant="ghost"
                         className="w-7 h-7 text-white/70 hover:text-white hover:bg-white/20"
-                        onClick={(e) => { e.stopPropagation(); handleDelete(img.taskId); }}
+                        onClick={(e) => { e.stopPropagation(); setDeleteConfirmTaskId(img.taskId); }}
                       >
                         <Trash2 className="w-3 h-3" />
                       </Button>

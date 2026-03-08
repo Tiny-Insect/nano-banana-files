@@ -108,31 +108,75 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   const btn1Ref = useRef<HTMLButtonElement>(null);
   const btn2Ref = useRef<HTMLButtonElement>(null);
   const [slider, setSlider] = useState({ left: 2, width: 0 });
+  const [animPhase, setAnimPhase] = useState<"idle" | "squeeze" | "move" | "expand">("idle");
+  const prevModelRef = useRef(model);
 
   const isPro = model === "nanobanana-pro";
 
+  // Color interpolation progress: 0 = blue, 1 = pro-accent
+  const [colorProgress, setColorProgress] = useState(isPro ? 1 : 0);
+
+  useEffect(() => {
+    if (prevModelRef.current === model) return;
+    prevModelRef.current = model;
+
+    // Phase 1: squeeze
+    setAnimPhase("squeeze");
+    setTimeout(() => {
+      // Phase 2: move + color transition
+      setAnimPhase("move");
+      setColorProgress(isPro ? 1 : 0);
+      const activeRef = model === "nanobanana-2" ? btn1Ref : btn2Ref;
+      if (activeRef.current && containerRef.current) {
+        const containerRect = containerRef.current.getBoundingClientRect();
+        const btnRect = activeRef.current.getBoundingClientRect();
+        setSlider({ left: btnRect.left - containerRect.left, width: btnRect.width });
+      }
+      setTimeout(() => {
+        // Phase 3: expand back
+        setAnimPhase("expand");
+        setTimeout(() => setAnimPhase("idle"), 250);
+      }, 350);
+    }, 150);
+  }, [model, isPro]);
+
+  // Initial position
   useEffect(() => {
     const activeRef = model === "nanobanana-2" ? btn1Ref : btn2Ref;
     if (activeRef.current && containerRef.current) {
       const containerRect = containerRef.current.getBoundingClientRect();
       const btnRect = activeRef.current.getBoundingClientRect();
-      setSlider({
-        left: btnRect.left - containerRect.left,
-        width: btnRect.width,
-      });
+      setSlider({ left: btnRect.left - containerRect.left, width: btnRect.width });
     }
-  }, [model]);
+    setColorProgress(isPro ? 1 : 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  const sliderScale =
+    animPhase === "squeeze" ? "scaleX(0.85) scaleY(0.88)" :
+    animPhase === "expand" ? "scaleX(1.04) scaleY(1.02)" : "scaleX(1) scaleY(1)";
+
+  const sliderTransition =
+    animPhase === "squeeze" ? "transform 150ms cubic-bezier(0.4, 0, 1, 1)" :
+    animPhase === "move" ? "all 350ms cubic-bezier(0.4, 0, 0.2, 1)" :
+    animPhase === "expand" ? "transform 250ms cubic-bezier(0, 0, 0.2, 1.2)" :
+    "all 350ms cubic-bezier(0.4, 0, 0.2, 1)";
+
+  // Interpolate color via CSS
+  const sliderBg = colorProgress >= 0.5
+    ? `linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.8))`
+    : `hsl(var(--primary))`;
 
   return (
     <div ref={containerRef} className="relative flex items-center bg-muted/30 rounded-md p-0.5 mr-0.5">
       <div
-        className="absolute top-0.5 bottom-0.5 rounded transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        className="absolute top-0.5 bottom-0.5 rounded"
         style={{
           left: slider.left,
           width: slider.width,
-          background: isPro
-            ? "linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.8))"
-            : "hsl(var(--primary))",
+          background: sliderBg,
+          transform: sliderScale,
+          transition: sliderTransition,
         }}
       />
       <button

@@ -22,7 +22,7 @@ const defaultSettings: AppSettings = {
   downloadPrefix: "LumenDust",
   downloadFormat: "png",
   downloadPath: "",
-  maxCacheMB: 500,
+  maxCacheMB: null,
 };
 
 export function loadSettings(): AppSettings {

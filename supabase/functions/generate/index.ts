@@ -121,7 +121,8 @@ serve(async (req) => {
     const customApiKey = req.headers.get("x-custom-api-key");
 
     // Determine if using custom API or Lovable AI Gateway
-    const useCustom = !!(customApiUrl?.trim() || Deno.env.get("NANOBANANA_API_URL")?.trim());
+    // Only use custom mode when frontend explicitly provides custom URL via headers
+    const useCustom = !!(customApiUrl?.trim());
     let chatUrl: string;
     let apiKey: string;
     let apiModel: string;

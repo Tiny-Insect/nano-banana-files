@@ -232,7 +232,6 @@ serve(async (req) => {
     if (web_search) requestBody.web_search = true;
     if (thinking_level) requestBody.thinking_level = thinking_level;
 
-    const chatUrl = `${baseUrl}/v1/chat/completions`;
     console.log("Request:", chatUrl, "model:", apiModel);
 
     const response = await fetch(chatUrl, {

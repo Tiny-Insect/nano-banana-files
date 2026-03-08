@@ -187,7 +187,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         </p>
                       </div>
                       <div>
-                        <label className="text-[11px] text-muted-foreground mb-1 block">图片格式</label>
+                        <label className="text-xs text-muted-foreground mb-1 block">图片格式</label>
                         <div className="flex gap-1">
                           {["png", "jpg", "webp"].map((fmt) => (
                             <button

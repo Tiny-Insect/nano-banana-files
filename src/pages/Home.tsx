@@ -1181,15 +1181,10 @@ export default function Home() {
       `}</style>
 
       {lightboxImage && (
-        <Lightbox
-          src={lightboxImage}
+        <ImageLightbox
+          image={{ imageUrl: lightboxImage, imageIndex: 0 }}
+          mode="simple"
           onClose={() => setLightboxImage(null)}
-          onDownload={(url) => {
-            const s = loadSettings();
-            const prefix = s.downloadPrefix || "LumenDust";
-            const storage = getStorage();
-            storage.downloadImage(url, `${prefix}-${Date.now()}`).catch(() => window.open(url, "_blank"));
-          }}
         />
       )}
     </Layout>

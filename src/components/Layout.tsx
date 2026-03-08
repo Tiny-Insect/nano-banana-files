@@ -111,14 +111,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <div className="space-y-2">
                     <div>
                       <div className="flex items-center gap-1 mb-1">
-                        <label className="text-[11px] text-muted-foreground">API URL</label>
+                        <label className="text-xs text-muted-foreground">API URL</label>
                         <Popover open={apiInfoOpen} onOpenChange={setApiInfoOpen}>
                           <PopoverTrigger asChild>
                             <button className="text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors cursor-pointer">
                               <Info className="w-3 h-3" />
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-72 p-3 text-xs bg-card/70 backdrop-blur-xl border-border/40 shadow-xl" align="start" side="bottom">
+                          <PopoverContent className="w-72 p-3 text-xs bg-card/90 backdrop-blur-2xl border-border/40 shadow-2xl relative z-[200]" align="start" side="bottom">
                             <p className="font-medium mb-2">API URL 说明</p>
                             <div className="space-y-2 text-muted-foreground">
                               <div>

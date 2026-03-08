@@ -126,24 +126,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                               <Info className="w-3 h-3" />
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-72 p-3 text-xs bg-card/90 backdrop-blur-2xl border-border/40 shadow-2xl relative z-[200]" align="start" side="bottom">
-                            <p className="font-medium mb-2">API URL 说明</p>
+                          <PopoverContent className="w-72 p-3 text-[11px] bg-card/90 backdrop-blur-2xl border-border/40 shadow-2xl relative z-[200]" align="start" side="bottom">
+                            <p className="font-medium mb-2 text-xs">API URL 说明</p>
                             <div className="space-y-2 text-muted-foreground">
                               <div>
                                 <p className="font-medium text-foreground/80">🔹 官方 Google API</p>
-                                <code className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded block mt-1 break-all">
+                                <code className="text-[11px] bg-muted/50 px-1.5 py-0.5 rounded block mt-1 break-all">
                                   https://generativelanguage.googleapis.com
                                 </code>
-                                <p className="text-[10px] mt-1">完整支持：联网搜索、思考模式、所有比例和分辨率</p>
+                                <p className="mt-1">完整支持：联网搜索、思考模式、所有比例和分辨率</p>
                               </div>
                               <div className="border-t border-border/30 pt-2">
                                 <p className="font-medium text-foreground/80">🔸 第三方代理 API</p>
-                                <code className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded block mt-1 break-all">
+                                <code className="text-[11px] bg-muted/50 px-1.5 py-0.5 rounded block mt-1 break-all">
                                   https://xxx.com/v1
                                 </code>
-                                <p className="text-[10px] mt-1">使用 OpenAI 兼容格式。联网搜索、思考模式可能不支持，比例/分辨率取决于代理商的适配程度。</p>
+                                <p className="mt-1">使用 OpenAI 兼容格式。联网搜索、思考模式可能不支持，比例/分辨率取决于代理商的适配程度。</p>
                               </div>
-                              <p className="text-[10px] text-muted-foreground/60 border-t border-border/30 pt-2">
+                              <p className="text-muted-foreground/60 border-t border-border/30 pt-2">
                                 ⚠️ 切换第三方 API 后如遇到错误，请优先检查该 API 是否支持对应功能。
                               </p>
                             </div>

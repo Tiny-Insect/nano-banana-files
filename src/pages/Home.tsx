@@ -510,6 +510,35 @@ export default function Home() {
     setReferenceImagePreviews((prev) => prev.filter((_, i) => i !== index));
   }, [setReferenceImages, setReferenceImagePreviews]);
 
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"));
+    if (files.length === 0) return;
+    const remaining = 10 - referenceImages.length;
+    const toUpload = files.slice(0, remaining);
+    for (const file of toUpload) {
+      try {
+        toast({ title: "正在上传参考图..." });
+        const url = await uploadImageToStorage(file);
+        setReferenceImagePreviews((prev) => [...prev, url]);
+        setReferenceImages((prev) => [...prev, url]);
+      } catch (err: any) {
+        toast({ title: err.message || "上传失败", variant: "destructive" });
+      }
+    }
+  }, [referenceImages.length, toast, setReferenceImages, setReferenceImagePreviews, uploadImageToStorage]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
+
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
     if (el) {

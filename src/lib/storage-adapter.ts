@@ -53,6 +53,11 @@ export interface StorageAdapter {
   deleteImage(imageId: string): Promise<void>;
 
   /**
+   * Delete an image by its URL (local-file:// or remote URL)
+   */
+  deleteImageByUrl(imageUrl: string): Promise<void>;
+
+  /**
    * Get total cache size in bytes
    */
   getCacheSize(): Promise<number>;

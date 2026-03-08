@@ -488,6 +488,27 @@ export default function Home() {
   const isPro = model === "nanobanana-pro";
   const accentActiveClass = isPro ? "text-pro-accent bg-pro-accent/10" : "text-primary bg-primary/10";
 
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle locate=taskId from Assets page
+  useEffect(() => {
+    const locateId = searchParams.get("locate");
+    if (locateId) {
+      setSearchParams({}, { replace: true });
+      // Wait for render, then scroll to the task element
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = document.getElementById(`task-${locateId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.classList.add("ring-2", "ring-primary/50", "rounded-lg");
+            setTimeout(() => el.classList.remove("ring-2", "ring-primary/50", "rounded-lg"), 2000);
+          }
+        }, 100);
+      });
+    }
+  }, [searchParams, setSearchParams]);
+
   useEffect(() => {
     requestAnimationFrame(() => {
       feedEndRef.current?.scrollIntoView();

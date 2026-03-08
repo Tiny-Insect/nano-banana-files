@@ -63,7 +63,12 @@ serve(async (req) => {
       .replace(/\/+$/, "");
 
     const apiModel = MODEL_MAP[model] || model;
-    const isGoogle = baseUrl.includes("generativelanguage.googleapis.com") || baseUrl.includes("googleapis.com");
+    // Auto-detect: Google native API vs OpenAI-compatible proxy
+    // Also detect if the raw URL explicitly uses Gemini endpoints (some proxies support both)
+    const isGoogle = baseUrl.includes("generativelanguage.googleapis.com") 
+      || baseUrl.includes("googleapis.com")
+      || rawUrl.includes("/v1beta/models/")
+      || rawUrl.includes(":generateContent");
     console.log("baseUrl:", baseUrl, "isGoogle:", isGoogle, "rawUrl:", rawUrl);
 
     let chatUrl: string;
@@ -132,7 +137,6 @@ serve(async (req) => {
     } else {
       // Third-party proxy (OpenAI-compatible)
       chatUrl = `${baseUrl}/v1/chat/completions`;
-      const imageSize = resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K";
 
       const contentParts: any[] = [];
       if (prompt) contentParts.push({ type: "text", text: prompt });
@@ -161,15 +165,29 @@ serve(async (req) => {
         model: apiModel,
         messages: [{ role: "user", content: contentParts }],
         modalities: ["text", "image"],
-        n: num_images || 1,
-        image_config: { image_size: imageSize, aspect_ratio },
-        generation_config: {
-          response_modalities: ["Text", "Image"],
-          image_generation_config: { image_size: imageSize, aspect_ratio },
-        },
+        // Don't send n>1 here; client already calls API multiple times
       };
+
+      // Try multiple parameter formats for aspect_ratio / image_size
+      // Different proxies support different formats
+      const imageSize = resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K";
+      if (aspect_ratio || resolution) {
+        // OpenAI-style (some proxies)
+        requestBody.image_config = {
+          ...(resolution ? { image_size: imageSize } : {}),
+          ...(aspect_ratio ? { aspect_ratio } : {}),
+        };
+        // Gemini-style via proxy (other proxies)
+        requestBody.generation_config = {
+          response_modalities: ["Text", "Image"],
+          image_generation_config: {
+            ...(resolution ? { image_size: imageSize } : {}),
+            ...(aspect_ratio ? { aspect_ratio } : {}),
+          },
+        };
+      }
       if (web_search) requestBody.web_search = true;
-      if (thinking_level) requestBody.thinking_level = thinking_level;
+      if (thinking_level && thinking_level !== "none") requestBody.thinking_level = thinking_level;
 
       reqHeaders = {
         "Content-Type": "application/json",

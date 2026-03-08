@@ -901,7 +901,7 @@ export default function Home() {
         )}
 
         <div
-          className="fixed bottom-0 left-0 right-0 px-6 pb-5 z-30"
+          className="fixed bottom-0 left-0 right-0 px-3 sm:px-6 pb-3 sm:pb-5 z-30"
         >
           <div className="max-w-3xl mx-auto">
           <TooltipProvider delayDuration={300}>
@@ -910,7 +910,7 @@ export default function Home() {
             style={isPro ? { borderColor: "hsl(var(--pro-accent) / 0.15)" } : undefined}
           >
               <>
-                <div className="flex items-start gap-3 p-5 pb-3">
+                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-5 pb-2 sm:pb-3">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -1012,12 +1012,12 @@ export default function Home() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
-                      发送 <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px]">Ctrl+↵</kbd>
+                      发送 <kbd className="ml-1 px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">Ctrl+Enter</kbd>
                     </TooltipContent>
                   </Tooltip>
                 </div>
 
-                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3 font-sans tracking-wide">
+                <div className="border-t border-border/15 px-3 sm:px-5 py-2 sm:py-3 flex flex-wrap items-center gap-1.5 sm:gap-3 font-sans tracking-wide">
                   <ModelToggle model={model} onChange={handleModelChange} />
 
                   <span className="w-px h-6 bg-border/20" />

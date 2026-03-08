@@ -925,6 +925,20 @@ export default function Home() {
                   onReEdit={handleReEdit}
                   onReGenerate={handleReGenerate}
                   onDelete={handleDeleteTask}
+                  onAddGeneratedAsRef={(originalUrl, event) => {
+                    if (referenceImages.length >= 10) {
+                      toast({ title: "最多上传10张参考图", variant: "destructive" });
+                      return;
+                    }
+                    if (event) {
+                      const rect = (event.currentTarget as HTMLElement).getBoundingClientRect();
+                      setFlyingImage({ src: originalUrl, x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 });
+                      setTimeout(() => setFlyingImage(null), 500);
+                    }
+                    setReferenceImagePreviews((prev) => [...prev, originalUrl]);
+                    setReferenceImages((prev) => [...prev, originalUrl]);
+                    toast({ title: "已添加为参考图" });
+                  }}
                 />
               ))}
               <div ref={feedEndRef} />

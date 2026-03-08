@@ -1,4 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
@@ -266,7 +267,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const modelLabel = MODEL_LABELS[task.model] || task.model;
 
   return (
-    <div className="mb-6 max-w-4xl">
+    <div id={`task-${task.id}`} className="mb-6 max-w-4xl transition-all duration-500">
       <div className="flex items-start gap-3 mb-3">
         {task.referenceImagePreviews.length > 0 && (
           <div className="flex gap-1.5 shrink-0">
@@ -486,6 +487,27 @@ export default function Home() {
   const prevLastTaskRef = useRef<string | null>(null);
   const isPro = model === "nanobanana-pro";
   const accentActiveClass = isPro ? "text-pro-accent bg-pro-accent/10" : "text-primary bg-primary/10";
+
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Handle locate=taskId from Assets page
+  useEffect(() => {
+    const locateId = searchParams.get("locate");
+    if (locateId) {
+      setSearchParams({}, { replace: true });
+      // Wait for render, then scroll to the task element
+      requestAnimationFrame(() => {
+        setTimeout(() => {
+          const el = document.getElementById(`task-${locateId}`);
+          if (el) {
+            el.scrollIntoView({ behavior: "smooth", block: "center" });
+            el.classList.add("ring-2", "ring-primary/50", "rounded-lg");
+            setTimeout(() => el.classList.remove("ring-2", "ring-primary/50", "rounded-lg"), 2000);
+          }
+        }, 100);
+      });
+    }
+  }, [searchParams, setSearchParams]);
 
   useEffect(() => {
     requestAnimationFrame(() => {

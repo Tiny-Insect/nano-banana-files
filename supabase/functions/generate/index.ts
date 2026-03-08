@@ -110,12 +110,17 @@ serve(async (req) => {
       model,
       prompt,
       images,
+      image_urls,
       aspect_ratio,
       resolution,
       num_images,
       web_search,
       thinking_level,
     } = body;
+
+    // Combine: prefer image_urls (Storage URLs), fall back to legacy base64 images
+    const refImageUrls: string[] = image_urls && image_urls.length > 0 ? image_urls : [];
+    const refImageBase64: string[] = !refImageUrls.length && images && images.length > 0 ? images : [];
 
     // Frontend can override API URL/Key via headers
     const customApiUrl = req.headers.get("x-custom-api-url")?.trim();

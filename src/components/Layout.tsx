@@ -13,7 +13,7 @@ export interface AppSettings {
   downloadPrefix: string;
   downloadFormat: string;
   downloadPath: string;
-  maxCacheMB: number;
+  maxCacheMB: number | null;
 }
 
 const defaultSettings: AppSettings = {

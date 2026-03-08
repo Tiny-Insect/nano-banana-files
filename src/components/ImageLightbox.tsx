@@ -64,8 +64,9 @@ export default function ImageLightbox({ image, mode, onClose, onUsePrompt, onReE
 
   const src = resolveImageSrc(image.imageUrl);
 
-  const handleDownload = () => {
-    downloadOriginalImage(image.imageUrl, image.imageIndex);
+  const handleDownload = async () => {
+    const savePath = await downloadOriginalImage(image.imageUrl, image.imageIndex);
+    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
   };
 
   const handleCopyPrompt = async () => {

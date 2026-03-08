@@ -50,7 +50,8 @@ export default function RecentlyDeleted() {
   const colWidth = Math.round(120 + (columnSize / 100) * 280);
 
   const handleDownload = async (url: string, index: number) => {
-    await downloadOriginalImage(url, index);
+    const savePath = await downloadOriginalImage(url, index);
+    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
   };
 
   const handleRestore = useCallback((taskId: string) => {

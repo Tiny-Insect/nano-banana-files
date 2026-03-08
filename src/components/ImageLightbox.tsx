@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { resolveImageSrc, formatDate } from "@/lib/format";
 import { downloadOriginalImage } from "@/lib/api";
+import { triggerDownloadNotification } from "@/components/DownloadNotification";
 import type { GenerationTask } from "@/lib/generation-store";
 
 const MODEL_LABELS: Record<string, string> = {
@@ -66,7 +67,7 @@ export default function ImageLightbox({ image, mode, onClose, onUsePrompt, onReE
 
   const handleDownload = async () => {
     const savePath = await downloadOriginalImage(image.imageUrl, image.imageIndex);
-    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
+    triggerDownloadNotification(savePath ? `已保存至「${savePath}」` : "已开始下载");
   };
 
   const handleCopyPrompt = async () => {

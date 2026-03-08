@@ -10,6 +10,7 @@ import { useGenerationStore, type GenerationTask, type ModelType } from "@/lib/g
 import { callGenerateApi, executeGeneration, downloadOriginalImage } from "@/lib/api";
 import { formatDate, resolveImageSrc } from "@/lib/format";
 import ImageLightbox, { type LightboxImage } from "@/components/ImageLightbox";
+import { triggerDownloadNotification } from "@/components/DownloadNotification";
 
 const MODEL_LABELS: Record<string, string> = {
   "nanobanana-2": "NanoBanana 2",
@@ -152,7 +153,7 @@ export default function Assets() {
 
   const handleDownload = async (url: string, index: number) => {
     const savePath = await downloadOriginalImage(url, index);
-    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
+    triggerDownloadNotification(savePath ? `已保存至「${savePath}」` : "已开始下载");
   };
 
   const handleLocate = (taskId: string) => {

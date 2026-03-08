@@ -7,6 +7,7 @@ import Layout from "@/components/Layout";
 import { useGenerationStore } from "@/lib/generation-store";
 import { downloadOriginalImage } from "@/lib/api";
 import { resolveImageSrc } from "@/lib/format";
+import { triggerDownloadNotification } from "@/components/DownloadNotification";
 import { loadTrash, restoreFromTrash, permanentDelete, clearAllTrash, type TrashedTask } from "@/lib/trash-store";
 import ImageLightbox, { type LightboxImage } from "@/components/ImageLightbox";
 
@@ -51,7 +52,7 @@ export default function RecentlyDeleted() {
 
   const handleDownload = async (url: string, index: number) => {
     const savePath = await downloadOriginalImage(url, index);
-    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
+    triggerDownloadNotification(savePath ? `已保存至「${savePath}」` : "已开始下载");
   };
 
   const handleRestore = useCallback((taskId: string) => {

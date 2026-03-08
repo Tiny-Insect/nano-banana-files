@@ -12,6 +12,7 @@ import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/comp
 import Layout, { loadSettings } from "@/components/Layout";
 import { executeGeneration, downloadOriginalImage } from "@/lib/api";
 import { resolveImageSrc } from "@/lib/format";
+import { triggerDownloadNotification } from "@/components/DownloadNotification";
 import ImageLightbox from "@/components/ImageLightbox";
 
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
@@ -201,7 +202,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const { toast } = useToast();
   const handleDownloadImage = async (url: string, index: number) => {
     const savePath = await downloadOriginalImage(url, index);
-    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
+    triggerDownloadNotification(savePath ? `已保存至「${savePath}」` : "已开始下载");
   };
 
   const statusLabels: Record<string, string> = {

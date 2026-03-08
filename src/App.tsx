@@ -1,4 +1,5 @@
 import { Toaster } from "@/components/ui/toaster";
+import DownloadNotificationHost from "@/components/DownloadNotification";
 import StarField from "@/components/StarField";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClientProvider } from "@tanstack/react-query";
@@ -47,6 +48,7 @@ function App() {
         <TooltipProvider>
           <StarField />
           <Toaster />
+          <DownloadNotificationHost />
           <HashRouter>
             <Routes>
               <Route path="/" element={<Home />} />

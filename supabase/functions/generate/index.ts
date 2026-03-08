@@ -63,7 +63,12 @@ serve(async (req) => {
       .replace(/\/+$/, "");
 
     const apiModel = MODEL_MAP[model] || model;
-    const isGoogle = baseUrl.includes("generativelanguage.googleapis.com") || baseUrl.includes("googleapis.com");
+    // Auto-detect: Google native API vs OpenAI-compatible proxy
+    // Also detect if the raw URL explicitly uses Gemini endpoints (some proxies support both)
+    const isGoogle = baseUrl.includes("generativelanguage.googleapis.com") 
+      || baseUrl.includes("googleapis.com")
+      || rawUrl.includes("/v1beta/models/")
+      || rawUrl.includes(":generateContent");
     console.log("baseUrl:", baseUrl, "isGoogle:", isGoogle, "rawUrl:", rawUrl);
 
     let chatUrl: string;

@@ -877,13 +877,13 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <textarea
+                   <textarea
                     ref={textareaRef}
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="输入提示词..."
-                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[56px] max-h-[160px] py-2 text-foreground placeholder:text-muted-foreground/30 overflow-hidden"
+                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[56px] max-h-[160px] py-2 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out"
                     rows={2}
                   />
 

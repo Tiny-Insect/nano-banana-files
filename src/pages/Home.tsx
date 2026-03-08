@@ -246,18 +246,10 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const downloadImage = async (url: string, index: number) => {
     const s = loadSettings();
     const prefix = s.downloadPrefix || "LumenDust";
-    const fmt = s.downloadFormat || "png";
     try {
-      const resp = await fetch(url);
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `${prefix}-${Date.now()}-${index}.${fmt}`;
-      a.click();
-      URL.revokeObjectURL(blobUrl);
+      const storage = getStorage();
+      await storage.downloadImage(url, `${prefix}-${Date.now()}-${index}`);
     } catch {
-      // Fallback: open in new tab
       window.open(url, "_blank");
     }
   };

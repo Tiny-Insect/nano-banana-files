@@ -292,7 +292,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </div>
                   </div>
                   <p className="text-[10px] text-muted-foreground/50 border-t border-border/30 pt-2">
-                    所有配置仅保存在本地浏览器中。下载路径由浏览器设置决定。
+                    所有配置保存在本地。点击缓存设置旁的 ℹ️ 了解详情。
                   </p>
                 </div>
               </PopoverContent>

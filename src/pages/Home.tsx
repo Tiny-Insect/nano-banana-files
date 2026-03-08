@@ -931,7 +931,7 @@ export default function Home() {
                     </button>
                   )}
 
-                  <span className="w-px h-5 bg-border/20" />
+                  <span className="w-px h-6 bg-border/20" />
                 </div>
               </>
           </div>

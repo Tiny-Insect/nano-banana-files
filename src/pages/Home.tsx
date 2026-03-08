@@ -384,7 +384,6 @@ export default function Home() {
 
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
-  const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
   const isAtBottomRef = useRef(true);
   const prevTaskCountRef = useRef(tasks.length);

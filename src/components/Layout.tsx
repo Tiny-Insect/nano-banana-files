@@ -107,7 +107,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </PopoverTrigger>
               <PopoverContent className="w-80 p-3 bg-card/70 backdrop-blur-xl border-border/40 shadow-xl" align="end">
                 <div className="space-y-3">
-                  <p className="text-xs font-medium">API 配置</p>
+                  <p className="text-sm font-medium">API 配置</p>
                   <div className="space-y-2">
                     <div>
                       <div className="flex items-center gap-1 mb-1">

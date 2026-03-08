@@ -762,61 +762,14 @@ export default function Home() {
         )}
 
         <div
-          className={`absolute bottom-0 left-0 right-0 px-4 pb-4 z-10 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]`}
+          className="absolute bottom-0 left-0 right-0 px-4 pb-4 z-10"
         >
           <div className="max-w-3xl mx-auto">
           <div 
-            className={`rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-lg transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${inputCollapsed ? "cursor-pointer hover:border-border/80" : ""}`}
-            onClick={() => { if (inputCollapsed) { setInputCollapsed(false); } }}
+            className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl"
           >
-            {inputCollapsed ? (
-              <div className="flex items-center gap-2 px-3 py-2">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handleImageUpload}
-                />
-                <button
-                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
-                  className="w-8 h-8 rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground/30 shrink-0 transition-colors hover:border-muted-foreground/40"
-                >
-                  <Plus className="w-3.5 h-3.5" />
-                </button>
-                {referenceImagePreviews.length > 0 && (
-                  <div className="flex items-center gap-0.5 shrink-0">
-                    {referenceImagePreviews.slice(0, 3).map((preview, i) => (
-                      <div key={i} className="w-7 h-7 rounded overflow-hidden border border-border/30">
-                        <img src={preview} alt="" className="w-full h-full object-cover" />
-                      </div>
-                    ))}
-                    {referenceImagePreviews.length > 3 && (
-                      <span className="text-[10px] text-muted-foreground/50 ml-1">+{referenceImagePreviews.length - 3}</span>
-                    )}
-                  </div>
-                )}
-                <input
-                  type="text"
-                  value={prompt}
-                  onChange={(e) => setPrompt(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && canGenerate) { e.preventDefault(); handleGenerate(); } }}
-                  placeholder="输入提示词..."
-                  className="flex-1 bg-transparent border-0 outline-none text-xs text-foreground placeholder:text-muted-foreground/30 min-w-0"
-                  onClick={(e) => e.stopPropagation()}
-                />
-                <Button
-                  onClick={(e) => { e.stopPropagation(); handleGenerate(); }}
-                  disabled={!canGenerate}
-                  size="icon"
-                  className="shrink-0 w-7 h-7 rounded-md"
-                >
-                  <Send className="w-3 h-3" />
-                </Button>
-              </div>
-            ) : (
               <>
-                <div className="flex items-start gap-2 p-3 pb-2">
+                <div className="flex items-start gap-3 p-4 pb-2">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -830,23 +783,23 @@ export default function Home() {
                       {referenceImagePreviews.map((preview, i) => (
                         <div
                           key={i}
-                          className="relative shrink-0 rounded-md overflow-hidden border border-border/40 transition-all duration-300 ease-out cursor-pointer group/img"
+                          className="relative shrink-0 rounded-lg overflow-hidden border border-border/40 transition-all duration-300 ease-out cursor-pointer group/img"
                           style={{
-                            width: 44,
-                            height: 44,
+                            width: 48,
+                            height: 48,
                             marginLeft: i > 0 ? -12 : 0,
                             zIndex: i,
                           }}
                           onMouseEnter={(e) => {
                             const el = e.currentTarget;
-                            el.style.width = "56px";
-                            el.style.height = "56px";
+                            el.style.width = "60px";
+                            el.style.height = "60px";
                             el.style.zIndex = "20";
                           }}
                           onMouseLeave={(e) => {
                             const el = e.currentTarget;
-                            el.style.width = "44px";
-                            el.style.height = "44px";
+                            el.style.width = "48px";
+                            el.style.height = "48px";
                             el.style.zIndex = String(i);
                           }}
                         >
@@ -867,7 +820,7 @@ export default function Home() {
                       {referenceImages.length < 10 && (
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-11 h-11 rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground/30 shrink-0 transition-colors hover:border-muted-foreground/40"
+                          className="w-12 h-12 rounded-lg border border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground/30 shrink-0 transition-colors hover:border-muted-foreground/40"
                           style={{ marginLeft: referenceImagePreviews.length > 0 ? -4 : 0 }}
                         >
                           <Plus className="w-4 h-4" />
@@ -882,7 +835,7 @@ export default function Home() {
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="输入提示词..."
-                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[56px] max-h-[160px] py-2 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
+                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[60px] max-h-[180px] py-2.5 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
                     rows={2}
                   />
 
@@ -890,16 +843,16 @@ export default function Home() {
                     onClick={handleGenerate}
                     disabled={!canGenerate}
                     size="icon"
-                    className="shrink-0 mt-0.5 rounded-lg"
+                    className="shrink-0 mt-1 rounded-lg w-10 h-10"
                   >
                     <Send className="w-4 h-4" />
                   </Button>
                 </div>
 
-                <div className="border-t border-border/20 px-3 py-2 flex flex-wrap items-center gap-2">
+                <div className="border-t border-border/15 px-4 py-2.5 flex flex-wrap items-center gap-2">
                   <ModelToggle model={model} onChange={handleModelChange} />
 
-                  <span className="w-px h-5 bg-border/30" />
+                  <span className="w-px h-5 bg-border/20" />
 
                   <Popover open={ratioOpen} onOpenChange={setRatioOpen}>
                     <PopoverTrigger asChild>
@@ -979,10 +932,9 @@ export default function Home() {
                     </button>
                   )}
 
-                  <span className="w-px h-5 bg-border/30" />
+                  <span className="w-px h-5 bg-border/20" />
                 </div>
               </>
-            )}
           </div>
           </div>
         </div>

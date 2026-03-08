@@ -198,15 +198,8 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   onDelete: (task: GenerationTask) => void;
   onAddGeneratedAsRef: (originalUrl: string, event?: React.MouseEvent) => void;
 }) {
-  const downloadImage = async (url: string, index: number) => {
-    const s = loadSettings();
-    const prefix = s.downloadPrefix || "LumenDust";
-    try {
-      const storage = getStorage();
-      await storage.downloadImage(url, `${prefix}-${Date.now()}-${index}`);
-    } catch {
-      window.open(url, "_blank");
-    }
+  const handleDownloadImage = async (url: string, index: number) => {
+    await downloadOriginalImage(url, index);
   };
 
   const statusLabels: Record<string, string> = {

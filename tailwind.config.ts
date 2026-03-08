@@ -51,6 +51,10 @@ export default {
           border: "var(--destructive-border)",
         },
         ring: "hsl(var(--ring) / <alpha-value>)",
+        "pro-accent": {
+          DEFAULT: "hsl(var(--pro-accent) / <alpha-value>)",
+          foreground: "hsl(var(--pro-accent-foreground) / <alpha-value>)",
+        },
         chart: {
           "1": "hsl(var(--chart-1) / <alpha-value>)",
           "2": "hsl(var(--chart-2) / <alpha-value>)",

@@ -6,13 +6,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { getStorage } from "@/lib/storage-factory";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
-import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain, CornerDownLeft } from "lucide-react";
+import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, AlertTriangle, Info, Globe, Brain, CornerDownLeft } from "lucide-react";
 import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
-import { callGenerateApi, executeGeneration, downloadOriginalImage } from "@/lib/api";
-import { resolveImageSrc } from "@/lib/format";
-import ImageLightbox, { type LightboxImage } from "@/components/ImageLightbox";
+import { executeGeneration, downloadOriginalImage } from "@/lib/api";
+import ImageLightbox from "@/components/ImageLightbox";
 
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
   const [w, h] = ratio.split(":").map(Number);

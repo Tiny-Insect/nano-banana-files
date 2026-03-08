@@ -763,12 +763,12 @@ export default function Home() {
         <div
           className="fixed bottom-0 left-0 right-0 px-6 pb-5 z-30"
         >
-          <div className="max-w-4xl mx-auto">
+          <div className="max-w-3xl mx-auto">
           <div 
             className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl"
           >
               <>
-                <div className="flex items-start gap-3 p-4 pb-2">
+                <div className="flex items-start gap-3 p-5 pb-3">
                   <input
                     ref={fileInputRef}
                     type="file"
@@ -834,7 +834,7 @@ export default function Home() {
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="输入提示词..."
-                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[60px] max-h-[180px] py-2.5 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
+                    className="flex-1 bg-transparent border-0 outline-none resize-none text-base min-h-[72px] max-h-[180px] py-3 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
                     rows={2}
                   />
 
@@ -842,20 +842,20 @@ export default function Home() {
                     onClick={handleGenerate}
                     disabled={!canGenerate}
                     size="icon"
-                    className="shrink-0 mt-1 rounded-lg w-10 h-10"
+                    className="shrink-0 mt-1 rounded-lg w-11 h-11"
                   >
                     <Send className="w-4 h-4" />
                   </Button>
                 </div>
 
-                <div className="border-t border-border/15 px-4 py-2.5 flex flex-wrap items-center gap-2">
+                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3">
                   <ModelToggle model={model} onChange={handleModelChange} />
 
-                  <span className="w-px h-5 bg-border/20" />
+                  <span className="w-px h-6 bg-border/20" />
 
                   <Popover open={ratioOpen} onOpenChange={setRatioOpen}>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
                         <RatioIcon ratio={aspectRatio} active={false} />
                         {aspectRatio}
                         <ChevronDown className="w-3 h-3 opacity-50" />
@@ -882,7 +882,7 @@ export default function Home() {
                   </Popover>
 
                   <Select value={resolution} onValueChange={setResolution}>
-                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-xs px-2 py-1 gap-1 text-muted-foreground">
+                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-sm px-2.5 py-1.5 gap-1 text-muted-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -893,7 +893,7 @@ export default function Home() {
                   </Select>
 
                   <Select value={String(numImages)} onValueChange={(v) => setNumImages(Number(v))}>
-                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-xs px-2 py-1 gap-1 text-muted-foreground">
+                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-sm px-2.5 py-1.5 gap-1 text-muted-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -905,33 +905,33 @@ export default function Home() {
 
                   <button
                     onClick={() => setWebSearch(!webSearch)}
-                    className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                       webSearch
                         ? "text-primary bg-primary/10"
                         : "text-muted-foreground hover:bg-muted/50"
                     }`}
                     title="联网搜索"
                   >
-                    <Globe className="w-3.5 h-3.5" />
+                    <Globe className="w-4 h-4" />
                     联网
                   </button>
 
                   {model !== "nanobanana-pro" && (
                     <button
                       onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
-                      className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                         thinkingLevel === "deep"
                           ? "text-primary bg-primary/10"
                           : "text-muted-foreground hover:bg-muted/50"
                       }`}
                       title="深度思考"
                     >
-                      <Brain className="w-3.5 h-3.5" />
+                      <Brain className="w-4 h-4" />
                       思考
                     </button>
                   )}
 
-                  <span className="w-px h-5 bg-border/20" />
+                  <span className="w-px h-6 bg-border/20" />
                 </div>
               </>
           </div>

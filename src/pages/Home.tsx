@@ -546,7 +546,6 @@ export default function Home() {
     const storage = getStorage();
     return storage.saveReferenceImage(file);
   }, []);
-  }, []);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];

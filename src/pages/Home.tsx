@@ -834,7 +834,7 @@ export default function Home() {
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="输入提示词..."
-                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[60px] max-h-[180px] py-2.5 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
+                    className="flex-1 bg-transparent border-0 outline-none resize-none text-base min-h-[72px] max-h-[180px] py-3 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
                     rows={2}
                   />
 

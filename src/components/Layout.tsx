@@ -96,7 +96,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               <Moon className={`w-3.5 h-3.5 absolute transition-all duration-300 ease-in-out ${dark ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0"}`} />
             </button>
 
-              <PopoverTrigger asChild>
+            <Popover>
                 <button
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-muted-foreground hover:text-foreground"
                 >

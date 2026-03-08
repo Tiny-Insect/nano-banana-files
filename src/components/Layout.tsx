@@ -59,7 +59,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col relative z-[1]">
       <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
-          <span className="select-none pointer-events-none" style={{ fontFamily: "'Dancing Script', cursive", fontSize: "24px", fontWeight: 700, lineHeight: 1 }}>LumenDust</span>
+          <span className="select-none pointer-events-none" style={{ fontFamily: "'Dancing Script', cursive", fontSize: "28px", fontWeight: 700, lineHeight: 1 }}>LumenDust</span>
           <div className="flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>

@@ -6,9 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-custom-api-url, x-custom-api-key",
 };
 
-const MODEL_MAP: Record<string, string> = {
+const LOVABLE_AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+// Model mapping for custom API endpoints (non-gateway)
+const MODEL_MAP_CUSTOM: Record<string, string> = {
   "nanobanana-2": "gemini-3.1-flash-image-preview",
   "nanobanana-pro": "gemini-3-pro-image-preview",
+};
+
+// Model mapping for Lovable AI Gateway
+const MODEL_MAP_GATEWAY: Record<string, string> = {
+  "nanobanana-2": "google/gemini-2.5-flash-image",
+  "nanobanana-pro": "google/gemini-3-pro-image-preview",
 };
 
 function extractImagesFromResponse(data: any): string[] {

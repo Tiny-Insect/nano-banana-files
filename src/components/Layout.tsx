@@ -118,7 +118,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                               <Info className="w-3 h-3" />
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-72 p-3 text-xs" align="start" side="bottom">
+                          <PopoverContent className="w-72 p-3 text-xs bg-card/70 backdrop-blur-xl border-border/40 shadow-xl" align="start" side="bottom">
                             <p className="font-medium mb-2">API URL 说明</p>
                             <div className="space-y-2 text-muted-foreground">
                               <div>

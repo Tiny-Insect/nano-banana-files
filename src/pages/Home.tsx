@@ -198,8 +198,10 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   onDelete: (task: GenerationTask) => void;
   onAddGeneratedAsRef: (originalUrl: string, event?: React.MouseEvent) => void;
 }) {
+  const { toast } = useToast();
   const handleDownloadImage = async (url: string, index: number) => {
-    await downloadOriginalImage(url, index);
+    const savePath = await downloadOriginalImage(url, index);
+    toast({ title: savePath ? `已保存至「${savePath}」` : "已开始下载" });
   };
 
   const statusLabels: Record<string, string> = {

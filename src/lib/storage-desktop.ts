@@ -152,9 +152,12 @@ export class DesktopStorage implements StorageAdapter {
   private async _saveToDir(imageUrl: string, dir: string, filename: string): Promise<void> {
     const filePath = `${dir}/${filename}`;
 
-    if (imageUrl.startsWith("local-file://") || imageUrl.startsWith("file://")) {
-      // Local file - read and copy
-      const localPath = imageUrl.replace("local-file://", "").replace("file://", "");
+    if (imageUrl.startsWith("local-file://")) {
+      // Local file - extract path from URL: local-file://serve/C:/path
+      const parsed = new URL(imageUrl);
+      let localPath = decodeURIComponent(parsed.pathname);
+      // On Windows remove leading /
+      if (localPath.startsWith("/") && localPath[2] === ":") localPath = localPath.slice(1);
       const base64 = await electronAPI.fsReadFile(localPath);
       if (base64) {
         await electronAPI.fsWriteFile(filePath, base64);

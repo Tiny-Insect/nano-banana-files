@@ -703,36 +703,7 @@ export default function Home() {
     };
 
     try {
-      updateTask(taskId, { status: "creating", statusDetail: "正在提交请求..." });
-      await new Promise((r) => setTimeout(r, 300));
-
-      const count = task.numImages || 1;
-      updateTask(taskId, { status: "generating", statusDetail: `正在生成 ${count} 张图片...` });
-
-      const promises = Array.from({ length: count }, () => callGenerateApi(bodyToSend));
-      const results = await Promise.allSettled(promises);
-
-      const allImages: string[] = [];
-      const allThumbs: string[] = [];
-      let lastError = "";
-      for (const r of results) {
-        if (r.status === "fulfilled" && r.value.images) {
-          allImages.push(...r.value.images);
-          allThumbs.push(...(r.value.thumbnails || r.value.images));
-        } else if (r.status === "fulfilled" && r.value.error) {
-          lastError = r.value.error;
-        } else if (r.status === "rejected") {
-          lastError = r.reason?.message || "生成失败";
-        }
-      }
-
-      updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
-
-      if (allImages.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: allImages, thumbnails: allThumbs, completedAt: Date.now() });
-      } else {
-        updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
-      }
+      await executeGeneration(taskId, bodyToSend, task.numImages || 1, updateTask);
     } catch (error: any) {
       const msg = error.message || "";
       if (msg.includes("429")) {

@@ -141,7 +141,8 @@ serve(async (req) => {
       .replace(/\/+$/, "");
 
     const apiModel = MODEL_MAP[model] || model;
-    const isGoogle = baseUrl.includes("generativelanguage.googleapis.com");
+    const isGoogle = baseUrl.includes("generativelanguage.googleapis.com") || baseUrl.includes("googleapis.com");
+    console.log("baseUrl:", baseUrl, "isGoogle:", isGoogle, "rawUrl:", rawUrl);
 
     let chatUrl: string;
     let requestBody: Record<string, any>;

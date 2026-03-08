@@ -382,14 +382,32 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                   onClick={() => onClickImage(src)}
                 />
                 <div className="absolute top-1.5 right-1.5 flex gap-1 opacity-0 group-hover/img:opacity-100 transition-opacity">
-                  <Button
-                    size="icon"
-                    variant="secondary"
-                    className="w-7 h-7"
-                    onClick={(e) => { e.stopPropagation(); downloadImage(src, i); }}
-                  >
-                    <Download className="w-3 h-3" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="w-7 h-7"
+                        onClick={(e) => { e.stopPropagation(); onAddGeneratedAsRef(src, e); }}
+                      >
+                        <CornerDownLeft className="w-3 h-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><span className="text-xs">引用图片</span></TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        size="icon"
+                        variant="secondary"
+                        className="w-7 h-7"
+                        onClick={(e) => { e.stopPropagation(); downloadImage(src, i); }}
+                      >
+                        <Download className="w-3 h-3" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="bottom"><span className="text-xs">下载</span></TooltipContent>
+                  </Tooltip>
                 </div>
               </div>
             );

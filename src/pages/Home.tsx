@@ -6,7 +6,7 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
-import { X, Loader2, Download, ImageIcon, Sparkles, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info } from "lucide-react";
+import { X, Loader2, Download, ImageIcon, Sparkles, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
 import Layout, { loadSettings } from "@/components/Layout";
 
 function getCustomApiHeaders(): Record<string, string> {
@@ -374,8 +374,8 @@ export default function Home() {
     aspectRatio, setAspectRatio,
     resolution, setResolution,
     numImages, setNumImages,
-    webSearch,
-    thinkingLevel,
+    webSearch, setWebSearch,
+    thinkingLevel, setThinkingLevel,
     tasks, addTask, updateTask, setTasks,
     lightboxImage, setLightboxImage,
   } = store;
@@ -910,6 +910,32 @@ export default function Home() {
                       ))}
                     </SelectContent>
                   </Select>
+
+                  <button
+                    onClick={() => setWebSearch(!webSearch)}
+                    className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                      webSearch
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:bg-muted/50"
+                    }`}
+                    title="联网搜索"
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    联网
+                  </button>
+
+                  <button
+                    onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
+                    className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                      thinkingLevel === "deep"
+                        ? "text-primary bg-primary/10"
+                        : "text-muted-foreground hover:bg-muted/50"
+                    }`}
+                    title="深度思考"
+                  >
+                    <Brain className="w-3.5 h-3.5" />
+                    思考
+                  </button>
 
                   <span className="w-px h-5 bg-border/30" />
                 </div>

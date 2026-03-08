@@ -185,27 +185,30 @@ serve(async (req) => {
       };
     }
 
-    // Build request body - same OpenAI-compatible format for all
+    // Build request body
     const requestBody: Record<string, any> = {
       model: apiModel,
       messages: [{ role: "user", content: contentParts }],
       modalities: ["text", "image"],
       n: num_images || 1,
-      image_config: {
+    };
+
+    // Only add custom fields for non-Google (third-party proxy) endpoints
+    if (!isGoogle) {
+      requestBody.image_config = {
         image_size: imageSize,
         aspect_ratio: aspect_ratio,
-      },
-      generation_config: {
+      };
+      requestBody.generation_config = {
         response_modalities: ["Text", "Image"],
         image_generation_config: {
           image_size: imageSize,
           aspect_ratio: aspect_ratio,
         },
-      },
-    };
-
-    if (web_search) requestBody.web_search = true;
-    if (thinking_level) requestBody.thinking_level = thinking_level;
+      };
+      if (web_search) requestBody.web_search = true;
+      if (thinking_level) requestBody.thinking_level = thinking_level;
+    }
 
     console.log("Request:", chatUrl, "model:", apiModel, "imageSize:", imageSize);
 

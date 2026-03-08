@@ -119,7 +119,11 @@ app.whenReady().then(() => {
     if (process.platform === "win32" && filePath.startsWith("/") && filePath[2] === ":") {
       filePath = filePath.slice(1);
     }
-    return net.fetch("file://" + filePath);
+    // On Windows, file:// URLs need three slashes: file:///C:/path
+    const fileUrl = process.platform === "win32" 
+      ? "file:///" + filePath.replace(/\\/g, "/")
+      : "file://" + filePath;
+    return net.fetch(fileUrl);
   });
 
   // Window control IPC handlers

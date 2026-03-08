@@ -1182,10 +1182,9 @@ export default function Home() {
                   <button
                     onClick={() => setWebSearch(!webSearch)}
                     className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
-                      webSearch
-                        ? accentActiveClass
-                        : "text-muted-foreground hover:bg-muted/50"
+                      !webSearch ? "text-muted-foreground hover:bg-muted/50" : ""
                     }`}
+                    style={webSearch ? { color: smoothAccent, backgroundColor: smoothAccentBg } : undefined}
                     title="联网搜索"
                   >
                     <Globe className="w-3.5 h-3.5" />
@@ -1196,10 +1195,9 @@ export default function Home() {
                     <button
                       onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
                       className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
-                        thinkingLevel === "deep"
-                          ? accentActiveClass
-                          : "text-muted-foreground hover:bg-muted/50"
+                        thinkingLevel !== "deep" ? "text-muted-foreground hover:bg-muted/50" : ""
                       }`}
+                      style={thinkingLevel === "deep" ? { color: smoothAccent, backgroundColor: smoothAccentBg } : undefined}
                       title="深度思考"
                     >
                       <Brain className="w-3.5 h-3.5" />

@@ -64,7 +64,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>
                 <button
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-sm font-medium transition-colors ${
                     location.pathname === item.path
                       ? "bg-accent text-accent-foreground"
                       : "text-muted-foreground"

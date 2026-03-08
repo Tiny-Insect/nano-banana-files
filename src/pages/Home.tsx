@@ -768,7 +768,7 @@ export default function Home() {
             className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl"
           >
               <>
-                <div className="flex items-start gap-3 p-4 pb-2">
+                <div className="flex items-start gap-3 p-5 pb-3">
                   <input
                     ref={fileInputRef}
                     type="file"

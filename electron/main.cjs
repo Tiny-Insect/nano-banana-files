@@ -112,15 +112,18 @@ app.on("second-instance", () => {
 
 app.whenReady().then(() => {
   // Register custom protocol handler to serve local files
+  // URL format: local-file://serve/<absolute-path>
   protocol.handle("local-file", (request) => {
     try {
       const rawUrl = request.url;
       console.log("[local-file] Request URL:", rawUrl);
       
-      // Strip scheme - handle both local-file:// and local-file:///
-      let filePath = decodeURIComponent(rawUrl.replace(/^local-file:\/\/\/?/, ""));
+      // Parse as standard URL: local-file://serve/C:/Users/path/file.png
+      const parsed = new URL(rawUrl);
+      // pathname will be /C:/Users/path/file.png
+      let filePath = decodeURIComponent(parsed.pathname);
       
-      // On Windows, URL might start with /C:/ - remove leading slash
+      // On Windows, pathname starts with /C:/ - remove leading slash
       if (process.platform === "win32" && /^\/[A-Za-z]:/.test(filePath)) {
         filePath = filePath.slice(1);
       }

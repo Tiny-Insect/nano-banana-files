@@ -1187,7 +1187,7 @@ export default function Home() {
                   setTasks((prev) => prev.filter((t) => t.status !== "error"));
                   toast({ title: "已删除所有失败任务" });
                 }}
-                className="fixed bottom-6 right-6 z-20 w-10 h-10 rounded-full bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110"
+                className="fixed bottom-6 right-6 z-40 w-10 h-10 rounded-full bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110"
               >
                 <AlertTriangle className="w-4 h-4" />
               </button>

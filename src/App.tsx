@@ -48,6 +48,7 @@ function App() {
         <TooltipProvider>
           <StarField />
           <Toaster />
+          <DownloadNotificationHost />
           <HashRouter>
             <Routes>
               <Route path="/" element={<Home />} />

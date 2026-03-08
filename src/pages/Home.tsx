@@ -95,7 +95,7 @@ const MODEL_LABELS: Record<string, string> = {
   "nanobanana-pro": "NanoBanana Pro",
 };
 
-function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelType) => void }) {
+function ModelToggle({ model, onChange, onColorProgress }: { model: string; onChange: (m: ModelType) => void; onColorProgress?: (p: number) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const btn1Ref = useRef<HTMLButtonElement>(null);
   const btn2Ref = useRef<HTMLButtonElement>(null);

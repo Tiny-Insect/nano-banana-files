@@ -725,8 +725,8 @@ export default function Home() {
 
   return (
     <Layout>
-      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4">
-        <div ref={feedRef} className="flex-1 py-6 overflow-y-auto flex flex-col">
+      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 overflow-hidden relative">
+        <div ref={feedRef} className="flex-1 py-6 overflow-y-auto flex flex-col min-h-0">
           {tasks.length > 0 ? (
             <div className="mt-auto">
               {tasks.map((task) => (
@@ -764,7 +764,7 @@ export default function Home() {
         )}
 
         <div
-          className="pb-4 transition-all duration-300 ease-in-out"
+          className="pb-4 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col justify-end"
         >
           <div 
             className={`rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm transition-all duration-300 ease-in-out ${inputCollapsed ? "cursor-pointer hover:border-border/80" : ""}`}
@@ -877,13 +877,13 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <textarea
+                   <textarea
                     ref={textareaRef}
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
                     placeholder="输入提示词..."
-                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[56px] max-h-[160px] py-2 text-foreground placeholder:text-muted-foreground/30 overflow-hidden"
+                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[56px] max-h-[160px] py-2 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out"
                     rows={2}
                   />
 

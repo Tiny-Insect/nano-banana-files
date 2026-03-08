@@ -1,12 +1,14 @@
-import { useState, useCallback, useMemo, useEffect } from "react";
+import { useState, useCallback, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Trash2, ImageIcon, X, ZoomIn, ZoomOut, AlertTriangle, RotateCcw } from "lucide-react";
-import Layout, { loadSettings } from "@/components/Layout";
-import { useGenerationStore, type GenerationTask } from "@/lib/generation-store";
-import { getStorage } from "@/lib/storage-factory";
-import { loadTrash, saveTrash, restoreFromTrash, permanentDelete, clearAllTrash, type TrashedTask } from "@/lib/trash-store";
+import Layout from "@/components/Layout";
+import { useGenerationStore } from "@/lib/generation-store";
+import { downloadOriginalImage } from "@/lib/api";
+import { resolveImageSrc } from "@/lib/format";
+import { loadTrash, restoreFromTrash, permanentDelete, clearAllTrash, type TrashedTask } from "@/lib/trash-store";
+import ImageLightbox, { type LightboxImage } from "@/components/ImageLightbox";
 
 interface TrashImage {
   id: string;
@@ -15,68 +17,6 @@ interface TrashImage {
   imageUrl: string;
   thumbUrl: string;
   task: TrashedTask;
-}
-
-function TrashLightbox({ image, onClose, onDownload, onRestore }: {
-  image: TrashImage;
-  onClose: () => void;
-  onDownload: (url: string, index: number) => void;
-  onRestore: (taskId: string) => void;
-}) {
-  const [visible, setVisible] = useState(false);
-
-  useState(() => {
-    requestAnimationFrame(() => setVisible(true));
-  });
-
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 250);
-  };
-
-  const src = image.imageUrl.startsWith("data:") || image.imageUrl.startsWith("http")
-    ? image.imageUrl
-    : `data:image/png;base64,${image.imageUrl}`;
-
-  return (
-    <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center transition-all duration-300 ${visible ? "bg-black/80 backdrop-blur-md" : "bg-black/0"}`}
-      onClick={handleClose}
-    >
-      <div
-        className={`flex flex-col items-center gap-4 transition-all duration-300 ease-out ${visible ? "scale-100 opacity-100" : "scale-90 opacity-0"}`}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <img
-          src={src}
-          alt="已删除图片"
-          className="max-w-[90vw] max-h-[75vh] object-contain rounded-lg shadow-2xl"
-        />
-        <div className="flex items-center gap-3">
-          <button
-            onClick={() => onDownload(src, image.imageIndex)}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-sm font-medium backdrop-blur-md transition-all duration-200 border border-white/10"
-          >
-            <Download className="w-4 h-4" />
-            下载原图
-          </button>
-          <button
-            onClick={() => { onRestore(image.taskId); handleClose(); }}
-            className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-primary/80 hover:bg-primary text-primary-foreground text-sm font-medium backdrop-blur-md transition-all duration-200"
-          >
-            <RotateCcw className="w-4 h-4" />
-            还原
-          </button>
-        </div>
-      </div>
-      <button
-        onClick={handleClose}
-        className={`absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
-      >
-        <X className="w-5 h-5" />
-      </button>
-    </div>
-  );
 }
 
 export default function RecentlyDeleted() {
@@ -110,23 +50,14 @@ export default function RecentlyDeleted() {
   const colWidth = Math.round(120 + (columnSize / 100) * 280);
 
   const handleDownload = async (url: string, index: number) => {
-    const s = loadSettings();
-    const prefix = s.downloadPrefix || "LumenDust";
-    try {
-      const storage = getStorage();
-      await storage.downloadImage(url, `${prefix}-${Date.now()}-${index}`);
-    } catch {
-      window.open(url, "_blank");
-    }
+    await downloadOriginalImage(url, index);
   };
 
   const handleRestore = useCallback((taskId: string) => {
-    // Fade out animation
     setFadingOut((prev) => new Set(prev).add(taskId));
     setTimeout(() => {
       const restored = restoreFromTrash(taskId);
       if (restored) {
-        // Insert back at original time position
         setTasks((prev) => {
           const newTasks = [...prev, restored];
           newTasks.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
@@ -156,6 +87,13 @@ export default function RecentlyDeleted() {
     setClearAllConfirm(false);
     toast({ title: "已清空最近删除" });
   };
+
+  // Convert to LightboxImage for the unified component
+  const lightboxImage: LightboxImage | null = selectedImage ? {
+    imageUrl: selectedImage.imageUrl,
+    imageIndex: selectedImage.imageIndex,
+    taskId: selectedImage.taskId,
+  } : null;
 
   return (
     <Layout>
@@ -202,10 +140,8 @@ export default function RecentlyDeleted() {
         ) : (
           <div style={{ columnWidth: `${colWidth}px`, columnGap: "12px" }}>
             {images.map((img) => {
-              const thumbSrc = img.thumbUrl.startsWith("data:") || img.thumbUrl.startsWith("http")
-                ? img.thumbUrl : `data:image/png;base64,${img.thumbUrl}`;
-              const fullSrc = img.imageUrl.startsWith("data:") || img.imageUrl.startsWith("http")
-                ? img.imageUrl : `data:image/png;base64,${img.imageUrl}`;
+              const thumbSrc = resolveImageSrc(img.thumbUrl);
+              const fullSrc = resolveImageSrc(img.imageUrl);
               const isFading = fadingOut.has(img.taskId);
               return (
                 <div
@@ -222,7 +158,6 @@ export default function RecentlyDeleted() {
                     loading="lazy"
                     className="w-full h-auto transition-transform duration-300 ease-out group-hover:scale-[1.03]"
                   />
-                  {/* Hover overlay with download + restore + delete */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-200 flex items-end justify-end p-2.5">
                     <div className="flex gap-1 shrink-0">
                       <Button
@@ -261,16 +196,16 @@ export default function RecentlyDeleted() {
         )}
       </div>
 
-      {selectedImage && (
-        <TrashLightbox
-          image={selectedImage}
+      {selectedImage && lightboxImage && (
+        <ImageLightbox
+          image={lightboxImage}
+          mode="trash"
           onClose={() => setSelectedImage(null)}
-          onDownload={handleDownload}
           onRestore={handleRestore}
         />
       )}
 
-      {/* Permanent delete confirmation - shows task thumbnails */}
+      {/* Permanent delete confirmation */}
       {deleteConfirmTask && (
         <div
           className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
@@ -289,12 +224,11 @@ export default function RecentlyDeleted() {
                 <p className="text-xs text-muted-foreground mt-0.5">删除后无法找回</p>
               </div>
             </div>
-            {/* Show task thumbnails */}
             {deleteConfirmTask.generatedImages.length > 0 && (
               <div className="flex flex-wrap gap-1.5 mb-4 bg-muted/20 rounded-lg p-2.5">
                 {deleteConfirmTask.generatedImages.map((img, i) => {
                   const thumb = deleteConfirmTask.thumbnails?.[i] || img;
-                  const src = thumb.startsWith("data:") || thumb.startsWith("http") ? thumb : `data:image/png;base64,${thumb}`;
+                  const src = resolveImageSrc(thumb);
                   return (
                     <img
                       key={i}
@@ -338,11 +272,10 @@ export default function RecentlyDeleted() {
                 <p className="text-xs text-muted-foreground mt-0.5">所有 {trashItems.length} 个任务将被永久删除，无法找回</p>
               </div>
             </div>
-            {/* Show all thumbnails preview */}
             {images.length > 0 && (
               <div className="flex flex-wrap gap-1 mb-4 bg-muted/20 rounded-lg p-2 max-h-40 overflow-y-auto custom-scrollbar">
                 {images.slice(0, 20).map((img) => {
-                  const src = img.thumbUrl.startsWith("data:") || img.thumbUrl.startsWith("http") ? img.thumbUrl : `data:image/png;base64,${img.thumbUrl}`;
+                  const src = resolveImageSrc(img.thumbUrl);
                   return (
                     <img key={img.id} src={src} alt="" className="w-12 h-12 rounded object-cover" />
                   );

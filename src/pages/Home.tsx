@@ -3,68 +3,15 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { getStorage } from "@/lib/storage-factory";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
-import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain, CornerDownLeft } from "lucide-react";
+import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, AlertTriangle, Info, Globe, Brain, CornerDownLeft } from "lucide-react";
 import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
-
-function getCustomApiHeaders(): Record<string, string> {
-  const s = loadSettings();
-  const headers: Record<string, string> = {};
-  if (s.customApiUrl.trim()) headers["X-Custom-Api-Url"] = s.customApiUrl.trim();
-  if (s.customApiKey.trim()) headers["X-Custom-Api-Key"] = s.customApiKey.trim();
-  return headers;
-}
-
-async function callGenerateApi(body: Record<string, any>): Promise<any> {
-  const customHeaders = getCustomApiHeaders();
-  const { data, error } = await supabase.functions.invoke("generate", {
-    body,
-    headers: customHeaders,
-  });
-  if (error) throw error;
-
-  if (data && data.error) return data;
-  if (data && data.images) return data;
-
-  const storage = getStorage();
-  const images: string[] = [];
-  const thumbnails: string[] = [];
-
-  if (data?.candidates) {
-    for (const candidate of data.candidates) {
-      if (candidate?.finishReason === "SAFETY") {
-        return { error: "请求被安全过滤器拦截，请尝试修改提示词" };
-      }
-      if (candidate?.content?.parts) {
-        for (const part of candidate.content.parts) {
-          const imgData = part.inlineData || part.inline_data;
-          if (imgData?.data) {
-            const mimeType = imgData.mimeType || imgData.mime_type || "image/png";
-            const dataUrl = `data:${mimeType};base64,${imgData.data}`;
-            try {
-              const blob = await fetch(dataUrl).then(r => r.blob());
-              const stored = await storage.saveGeneratedImage(blob, mimeType);
-              images.push(stored.originalUrl);
-              thumbnails.push(stored.thumbnailUrl);
-            } catch {
-              // Fallback to data URL if storage fails
-              images.push(dataUrl);
-              thumbnails.push(dataUrl);
-            }
-          }
-        }
-      }
-    }
-  }
-
-  if (images.length > 0) return { images, thumbnails };
-  return { error: "未返回图片", raw: data };
-}
+import { executeGeneration, downloadOriginalImage } from "@/lib/api";
+import ImageLightbox from "@/components/ImageLightbox";
 
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
   const [w, h] = ratio.split(":").map(Number);
@@ -250,15 +197,8 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   onDelete: (task: GenerationTask) => void;
   onAddGeneratedAsRef: (originalUrl: string, event?: React.MouseEvent) => void;
 }) {
-  const downloadImage = async (url: string, index: number) => {
-    const s = loadSettings();
-    const prefix = s.downloadPrefix || "LumenDust";
-    try {
-      const storage = getStorage();
-      await storage.downloadImage(url, `${prefix}-${Date.now()}-${index}`);
-    } catch {
-      window.open(url, "_blank");
-    }
+  const handleDownloadImage = async (url: string, index: number) => {
+    await downloadOriginalImage(url, index);
   };
 
   const statusLabels: Record<string, string> = {
@@ -407,7 +347,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                         size="icon"
                         variant="secondary"
                         className="w-7 h-7"
-                        onClick={(e) => { e.stopPropagation(); downloadImage(src, i); }}
+                        onClick={(e) => { e.stopPropagation(); handleDownloadImage(src, i); }}
                       >
                         <Download className="w-3 h-3" />
                       </Button>
@@ -451,43 +391,6 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   );
 }
 
-function Lightbox({ src, onClose, onDownload }: { src: string; onClose: () => void; onDownload: (url: string) => void }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
-  }, []);
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 200);
-  };
-  return (
-    <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center cursor-pointer transition-all duration-200 ${visible ? "bg-black/80 backdrop-blur-sm" : "bg-black/0"}`}
-      onClick={handleClose}
-    >
-      <div className={`flex flex-col items-center gap-3 transition-all duration-300 ease-out ${visible ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} onClick={(e) => e.stopPropagation()}>
-        <img
-          src={src}
-          alt="放大预览"
-          className="max-w-[90vw] max-h-[82vh] object-contain rounded-lg shadow-2xl"
-        />
-        <button
-          onClick={() => onDownload(src)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-sm font-medium backdrop-blur-md transition-all duration-200 border border-white/10"
-        >
-          <Download className="w-4 h-4" />
-          下载原图
-        </button>
-      </div>
-      <button
-        onClick={handleClose}
-        className={`absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
-      >
-        <X className="w-5 h-5" />
-      </button>
-    </div>
-  );
-}
 
 export default function Home() {
   const { toast } = useToast();
@@ -700,38 +603,7 @@ export default function Home() {
     };
 
     try {
-      updateTask(taskId, { status: "creating", statusDetail: "正在提交请求..." });
-      await new Promise((r) => setTimeout(r, 300));
-
-      // Gemini generateContent only returns 1 image per call.
-      // For multiple images, call API multiple times in parallel.
-      const count = numImages || 1;
-      updateTask(taskId, { status: "generating", statusDetail: `正在生成 ${count} 张图片...` });
-
-      const promises = Array.from({ length: count }, () => callGenerateApi(bodyToSend));
-      const results = await Promise.allSettled(promises);
-
-      const allImages: string[] = [];
-      const allThumbs: string[] = [];
-      let lastError = "";
-      for (const r of results) {
-        if (r.status === "fulfilled" && r.value.images) {
-          allImages.push(...r.value.images);
-          allThumbs.push(...(r.value.thumbnails || r.value.images));
-        } else if (r.status === "fulfilled" && r.value.error) {
-          lastError = r.value.error;
-        } else if (r.status === "rejected") {
-          lastError = r.reason?.message || "生成失败";
-        }
-      }
-
-      updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
-
-      if (allImages.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: allImages, thumbnails: allThumbs, completedAt: Date.now() });
-      } else {
-        updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
-      }
+      await executeGeneration(taskId, bodyToSend, numImages || 1, updateTask);
     } catch (error: any) {
       const msg = error.message || "";
       if (msg.includes("429")) {
@@ -830,36 +702,7 @@ export default function Home() {
     };
 
     try {
-      updateTask(taskId, { status: "creating", statusDetail: "正在提交请求..." });
-      await new Promise((r) => setTimeout(r, 300));
-
-      const count = task.numImages || 1;
-      updateTask(taskId, { status: "generating", statusDetail: `正在生成 ${count} 张图片...` });
-
-      const promises = Array.from({ length: count }, () => callGenerateApi(bodyToSend));
-      const results = await Promise.allSettled(promises);
-
-      const allImages: string[] = [];
-      const allThumbs: string[] = [];
-      let lastError = "";
-      for (const r of results) {
-        if (r.status === "fulfilled" && r.value.images) {
-          allImages.push(...r.value.images);
-          allThumbs.push(...(r.value.thumbnails || r.value.images));
-        } else if (r.status === "fulfilled" && r.value.error) {
-          lastError = r.value.error;
-        } else if (r.status === "rejected") {
-          lastError = r.reason?.message || "生成失败";
-        }
-      }
-
-      updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
-
-      if (allImages.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: allImages, thumbnails: allThumbs, completedAt: Date.now() });
-      } else {
-        updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
-      }
+      await executeGeneration(taskId, bodyToSend, task.numImages || 1, updateTask);
     } catch (error: any) {
       const msg = error.message || "";
       if (msg.includes("429")) {
@@ -1337,15 +1180,10 @@ export default function Home() {
       `}</style>
 
       {lightboxImage && (
-        <Lightbox
-          src={lightboxImage}
+        <ImageLightbox
+          image={{ imageUrl: lightboxImage, imageIndex: 0 }}
+          mode="simple"
           onClose={() => setLightboxImage(null)}
-          onDownload={(url) => {
-            const s = loadSettings();
-            const prefix = s.downloadPrefix || "LumenDust";
-            const storage = getStorage();
-            storage.downloadImage(url, `${prefix}-${Date.now()}`).catch(() => window.open(url, "_blank"));
-          }}
         />
       )}
     </Layout>

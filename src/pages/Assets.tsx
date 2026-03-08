@@ -602,8 +602,10 @@ export default function Assets() {
           onDownload={handleDownload}
           onLocate={handleLocate}
           onDelete={(taskId) => {
+            const task = tasks.find((t) => t.id === taskId);
+            if (task) moveToTrash(task);
             setTasks((prev) => prev.filter((t) => t.id !== taskId));
-            toast({ title: "已删除" });
+            toast({ title: "已移至最近删除" });
           }}
         />
       )}

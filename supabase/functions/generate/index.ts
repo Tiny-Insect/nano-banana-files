@@ -160,8 +160,16 @@ serve(async (req) => {
       // Build native Gemini content parts
       const parts: any[] = [];
       if (prompt) parts.push({ text: prompt });
-      if (images && images.length > 0) {
-        for (const img of images) {
+      // Use fileUri for URL-based images (no memory overhead)
+      if (refImageUrls.length > 0) {
+        for (const url of refImageUrls) {
+          parts.push({ fileData: { mimeType: "image/jpeg", fileUri: url } });
+        }
+        if (!prompt) parts.unshift({ text: "Based on the reference image(s), generate a similar image." });
+      }
+      // Legacy: base64 inline (small images only)
+      if (refImageBase64.length > 0) {
+        for (const img of refImageBase64) {
           const raw = img.startsWith("data:") ? img.split(",")[1] : img;
           parts.push({ inlineData: { mimeType: "image/png", data: raw } });
         }

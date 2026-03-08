@@ -182,7 +182,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const modelLabel = MODEL_LABELS[task.model] || task.model;
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 max-w-4xl">
       <div className="flex items-start gap-3 mb-3">
         {task.referenceImagePreviews.length > 0 && (
           <div className="flex gap-1.5 shrink-0">
@@ -198,49 +198,56 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
             ))}
           </div>
         )}
-        <div className="group/prompt flex-1 min-w-0">
+        <div className="group/prompt flex-1 min-w-0 relative">
           {task.prompt && (
-            <div className="relative rounded-lg px-3 py-2 transition-all duration-200 group-hover/prompt:bg-muted/20 cursor-default">
-              <div className="prompt-fade-mask overflow-hidden transition-[max-height] duration-300 ease-out max-h-[2.8em] group-hover/prompt:max-h-[500px]">
+            <div className="relative rounded-lg px-3 py-2 cursor-default">
+              {/* Always visible: clipped to 2 lines */}
+              <div className="overflow-hidden max-h-[2.8em]">
                 <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                   {task.prompt}
                 </p>
               </div>
-              <div className="flex items-center gap-0 mt-1 opacity-0 group-hover/prompt:opacity-100 transition-opacity duration-200">
-                <span className="text-[11px] text-muted-foreground/40">{modelLabel}</span>
-                <span className="text-muted-foreground/20 mx-1.5">|</span>
-                <span className="text-[11px] text-muted-foreground/40">{task.aspectRatio}</span>
-                <span className="text-muted-foreground/20 mx-1.5">|</span>
-                <span className="text-[11px] text-muted-foreground/40">{task.resolution.toUpperCase()}</span>
-                <span className="text-muted-foreground/20 mx-1.5">|</span>
-                <span className="group/info relative inline-flex items-center gap-1 cursor-default">
-                  <span className="text-[11px] text-muted-foreground/40 group-hover/info:text-muted-foreground/70 transition-colors">详细信息</span>
-                  <Info className="w-3 h-3 text-muted-foreground/30 group-hover/info:text-muted-foreground/60 transition-colors" />
-                  <div className="absolute left-0 top-full mt-1 z-50 w-56 p-3 rounded-lg border border-border/50 bg-popover shadow-xl opacity-0 scale-95 pointer-events-none group-hover/info:opacity-100 group-hover/info:scale-100 group-hover/info:pointer-events-auto transition-all duration-200 origin-top-left">
-                    <div className="space-y-1.5">
-                      {[
-                        ["模型", modelLabel],
-                        ["比例", task.aspectRatio],
-                        ["分辨率", task.resolution.toUpperCase()],
-                        ["联网搜索", task.webSearch ? "是" : "否"],
-                        ...(task.model !== "nanobanana-pro" ? [["思考模式", task.thinkingLevel === "deep" ? "深度" : "快速"]] : []),
-                      ].map(([label, value]) => (
-                        <div key={label} className="flex items-center justify-between">
-                          <span className="text-[11px] text-muted-foreground/60">{label}</span>
-                          <span className="text-[11px] text-foreground/80">{value}</span>
-                        </div>
-                      ))}
+              {/* Hover overlay: expands above, doesn't push layout */}
+              <div className="absolute left-0 right-0 bottom-0 z-20 rounded-lg px-3 py-2 bg-card/95 backdrop-blur-md border border-border/30 shadow-lg opacity-0 pointer-events-none group-hover/prompt:opacity-100 group-hover/prompt:pointer-events-auto transition-all duration-200 origin-bottom">
+                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto custom-scrollbar">
+                  {task.prompt}
+                </p>
+                <div className="flex items-center gap-0 mt-1.5">
+                  <span className="text-[11px] text-muted-foreground/40">{modelLabel}</span>
+                  <span className="text-muted-foreground/20 mx-1.5">|</span>
+                  <span className="text-[11px] text-muted-foreground/40">{task.aspectRatio}</span>
+                  <span className="text-muted-foreground/20 mx-1.5">|</span>
+                  <span className="text-[11px] text-muted-foreground/40">{task.resolution.toUpperCase()}</span>
+                  <span className="text-muted-foreground/20 mx-1.5">|</span>
+                  <span className="group/info relative inline-flex items-center gap-1 cursor-default">
+                    <span className="text-[11px] text-muted-foreground/40 group-hover/info:text-muted-foreground/70 transition-colors">详细信息</span>
+                    <Info className="w-3 h-3 text-muted-foreground/30 group-hover/info:text-muted-foreground/60 transition-colors" />
+                    <div className="absolute left-0 bottom-full mb-1 z-50 w-56 p-3 rounded-lg border border-border/50 bg-popover shadow-xl opacity-0 scale-95 pointer-events-none group-hover/info:opacity-100 group-hover/info:scale-100 group-hover/info:pointer-events-auto transition-all duration-200 origin-bottom-left">
+                      <div className="space-y-1.5">
+                        {[
+                          ["模型", modelLabel],
+                          ["比例", task.aspectRatio],
+                          ["分辨率", task.resolution.toUpperCase()],
+                          ["联网搜索", task.webSearch ? "是" : "否"],
+                          ...(task.model !== "nanobanana-pro" ? [["思考模式", task.thinkingLevel === "deep" ? "深度" : "快速"]] : []),
+                        ].map(([label, value]) => (
+                          <div key={label} className="flex items-center justify-between">
+                            <span className="text-[11px] text-muted-foreground/60">{label}</span>
+                            <span className="text-[11px] text-foreground/80">{value}</span>
+                          </div>
+                        ))}
+                      </div>
                     </div>
-                  </div>
-                </span>
-                <span className="flex-1" />
-                <button
-                  onClick={() => onUsePrompt(task.prompt)}
-                  className="text-[11px] text-primary/70 hover:text-primary flex items-center gap-1 px-2 py-0.5 rounded bg-primary/5 hover:bg-primary/10 transition-colors shrink-0"
-                >
-                  <Copy className="w-3 h-3" />
-                  使用提示词
-                </button>
+                  </span>
+                  <span className="flex-1" />
+                  <button
+                    onClick={() => onUsePrompt(task.prompt)}
+                    className="text-[11px] text-primary/70 hover:text-primary flex items-center gap-1 px-2 py-0.5 rounded bg-primary/5 hover:bg-primary/10 transition-colors shrink-0"
+                  >
+                    <Copy className="w-3 h-3" />
+                    使用提示词
+                  </button>
+                </div>
               </div>
             </div>
           )}

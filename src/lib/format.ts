@@ -9,6 +9,11 @@ export function formatDate(ts?: number) {
 
 /** Resolve an image string to a displayable src */
 export function resolveImageSrc(url: string): string {
-  if (url.startsWith("data:") || url.startsWith("http")) return url;
+  if (url.startsWith("data:") || url.startsWith("http") || url.startsWith("local-file://") || url.startsWith("file://")) return url;
   return `data:image/png;base64,${url}`;
+}
+
+/** Check if a URL is a valid displayable image source (not raw base64) */
+export function isImageUrl(url: string): boolean {
+  return url.startsWith("data:") || url.startsWith("http") || url.startsWith("local-file://") || url.startsWith("file://");
 }

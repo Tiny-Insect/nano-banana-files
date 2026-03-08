@@ -1085,7 +1085,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-2 mb-4 bg-muted/20 rounded-lg p-3">
                 {deleteConfirmTask.generatedImages.map((img, i) => {
                   const thumb = deleteConfirmTask.thumbnails?.[i] || img;
-                  const src = thumb.startsWith("data:") || thumb.startsWith("http") ? thumb : `data:image/png;base64,${thumb}`;
+                  const src = resolveImageSrc(thumb);
                   const count = deleteConfirmTask.generatedImages.length;
                   return (
                     <img

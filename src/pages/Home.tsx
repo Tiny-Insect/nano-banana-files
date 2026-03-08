@@ -294,7 +294,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
               </div>
               {/* Hover overlay: expands downward over images */}
               <div className="absolute left-0 right-0 top-0 z-20 rounded-lg px-3 py-2 bg-card/95 backdrop-blur-md border border-border/30 shadow-lg opacity-0 pointer-events-none group-hover/prompt:opacity-100 group-hover/prompt:pointer-events-auto transition-all duration-200 origin-top">
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto custom-scrollbar">
+                <p className="text-[15px] text-muted-foreground leading-relaxed whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto custom-scrollbar">
                   {task.prompt}
                 </p>
                 <div className="flex items-center gap-0 mt-1.5">

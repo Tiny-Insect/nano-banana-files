@@ -37,7 +37,6 @@ export function getStorage(): StorageAdapter {
     _instance = new DesktopStorage();
     console.info("[Storage] Using desktop storage (local filesystem)");
   } else {
-  } else {
     _instance = new WebStorage();
   }
 

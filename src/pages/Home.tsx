@@ -1214,6 +1214,26 @@ export default function Home() {
           </TooltipProvider>
           </div>
         </div>
+
+        {/* Delete all failed tasks button */}
+        {tasks.some((t) => t.status === "error") && (
+          <TooltipProvider delayDuration={300}>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => {
+                  setTasks((prev) => prev.filter((t) => t.status !== "error"));
+                  toast({ title: "已删除所有失败任务" });
+                }}
+                className="fixed bottom-6 right-6 z-20 w-10 h-10 rounded-full bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110"
+              >
+                <AlertTriangle className="w-4 h-4" />
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="left"><span className="text-xs">删除所有失败任务</span></TooltipContent>
+          </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       {deleteConfirmTask && (
@@ -1228,11 +1248,28 @@ export default function Home() {
                 <p className="text-xs text-muted-foreground mt-0.5">该任务将移至「最近删除」，可随时找回</p>
               </div>
             </div>
-            {deleteConfirmTask.prompt && (
-              <p className="text-xs text-muted-foreground/70 bg-muted/30 rounded-md px-3 py-2 mb-4 truncate">
-                "{deleteConfirmTask.prompt}"
+            {/* Show task thumbnails instead of prompt */}
+            {deleteConfirmTask.generatedImages && deleteConfirmTask.generatedImages.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5 mb-4 bg-muted/20 rounded-lg p-2.5">
+                {deleteConfirmTask.generatedImages.map((img, i) => {
+                  const thumb = deleteConfirmTask.thumbnails?.[i] || img;
+                  const src = thumb.startsWith("data:") || thumb.startsWith("http") ? thumb : `data:image/png;base64,${thumb}`;
+                  return (
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      className="rounded-md object-cover"
+                      style={{ width: deleteConfirmTask.generatedImages.length === 1 ? "100%" : "calc(50% - 3px)", maxHeight: 120 }}
+                    />
+                  );
+                })}
+              </div>
+            ) : deleteConfirmTask.status === "error" ? (
+              <p className="text-xs text-muted-foreground/70 bg-muted/30 rounded-md px-3 py-2 mb-4">
+                生成失败的任务将被直接删除
               </p>
-            )}
+            ) : null}
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"

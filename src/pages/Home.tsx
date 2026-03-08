@@ -268,6 +268,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const modelLabel = MODEL_LABELS[task.model] || task.model;
 
   return (
+    <TooltipProvider delayDuration={300}>
     <div id={`task-${task.id}`} className="mb-6 max-w-4xl transition-all duration-500">
       <div className="flex items-start gap-3 mb-3">
         {task.referenceImagePreviews.length > 0 && (

@@ -874,13 +874,21 @@ export default function Home() {
     setDeleteConfirmTask(task);
   };
 
-  const confirmDelete = async () => {
+  const confirmDeleteToTrash = () => {
     const task = deleteConfirmTask;
     if (!task) return;
     setDeleteConfirmTask(null);
     const movedToTrash = moveToTrash(task);
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
     toast({ title: movedToTrash ? "已移至最近删除" : "已删除任务" });
+  };
+
+  const confirmRemoveFromQueue = () => {
+    const task = deleteConfirmTask;
+    if (!task) return;
+    setDeleteConfirmTask(null);
+    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+    toast({ title: "已从队列中移除（数据保留在资产库）" });
   };
 
   return (

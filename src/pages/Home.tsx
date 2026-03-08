@@ -151,14 +151,23 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   onReGenerate: (task: GenerationTask) => void;
   onDelete: (task: GenerationTask) => void;
 }) {
-  const downloadImage = (url: string, index: number) => {
+  const downloadImage = async (url: string, index: number) => {
     const s = loadSettings();
     const prefix = s.downloadPrefix || "LumenDust";
     const fmt = s.downloadFormat || "png";
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${prefix}-${Date.now()}-${index}.${fmt}`;
-    a.click();
+    try {
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      const blobUrl = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = blobUrl;
+      a.download = `${prefix}-${Date.now()}-${index}.${fmt}`;
+      a.click();
+      URL.revokeObjectURL(blobUrl);
+    } catch {
+      // Fallback: open in new tab
+      window.open(url, "_blank");
+    }
   };
 
   const statusLabels: Record<string, string> = {
@@ -537,17 +546,33 @@ export default function Home() {
     try {
       updateTask(taskId, { status: "creating", statusDetail: "正在提交请求..." });
       await new Promise((r) => setTimeout(r, 300));
-      updateTask(taskId, { status: "generating", statusDetail: "已发送至 API，等待模型响应..." });
 
-      const data = await callGenerateApi(bodyToSend);
+      // Gemini generateContent only returns 1 image per call.
+      // For multiple images, call API multiple times in parallel.
+      const count = numImages || 1;
+      updateTask(taskId, { status: "generating", statusDetail: `正在生成 ${count} 张图片...` });
+
+      const promises = Array.from({ length: count }, () => callGenerateApi(bodyToSend));
+      const results = await Promise.allSettled(promises);
+
+      const allImages: string[] = [];
+      let lastError = "";
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value.images) {
+          allImages.push(...r.value.images);
+        } else if (r.status === "fulfilled" && r.value.error) {
+          lastError = r.value.error;
+        } else if (r.status === "rejected") {
+          lastError = r.reason?.message || "生成失败";
+        }
+      }
+
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
 
-      if (data.error) {
-        updateTask(taskId, { status: "error", error: data.error, completedAt: Date.now() });
-      } else if (data.images && data.images.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: data.images, completedAt: Date.now() });
+      if (allImages.length > 0) {
+        updateTask(taskId, { status: "complete", generatedImages: allImages, completedAt: Date.now() });
       } else {
-        updateTask(taskId, { status: "error", error: "未返回图片" });
+        updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
       }
     } catch (error: any) {
       const msg = error.message || "";
@@ -648,17 +673,31 @@ export default function Home() {
     try {
       updateTask(taskId, { status: "creating", statusDetail: "正在提交请求..." });
       await new Promise((r) => setTimeout(r, 300));
-      updateTask(taskId, { status: "generating", statusDetail: "已发送至 API，等待模型响应..." });
 
-      const data = await callGenerateApi(bodyToSend);
+      const count = task.numImages || 1;
+      updateTask(taskId, { status: "generating", statusDetail: `正在生成 ${count} 张图片...` });
+
+      const promises = Array.from({ length: count }, () => callGenerateApi(bodyToSend));
+      const results = await Promise.allSettled(promises);
+
+      const allImages: string[] = [];
+      let lastError = "";
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value.images) {
+          allImages.push(...r.value.images);
+        } else if (r.status === "fulfilled" && r.value.error) {
+          lastError = r.value.error;
+        } else if (r.status === "rejected") {
+          lastError = r.reason?.message || "生成失败";
+        }
+      }
+
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
 
-      if (data.error) {
-        updateTask(taskId, { status: "error", error: data.error, completedAt: Date.now() });
-      } else if (data.images && data.images.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: data.images, completedAt: Date.now() });
+      if (allImages.length > 0) {
+        updateTask(taskId, { status: "complete", generatedImages: allImages, completedAt: Date.now() });
       } else {
-        updateTask(taskId, { status: "error", error: "未返回图片" });
+        updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
       }
     } catch (error: any) {
       const msg = error.message || "";

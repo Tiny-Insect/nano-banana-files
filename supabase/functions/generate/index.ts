@@ -228,8 +228,6 @@ serve(async (req) => {
     const response = await fetch(chatUrl, {
       method: "POST",
       headers: reqHeaders,
-      method: "POST",
-      headers,
       body: JSON.stringify(requestBody),
     });
 

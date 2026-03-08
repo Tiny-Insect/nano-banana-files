@@ -141,80 +141,93 @@ serve(async (req) => {
       .replace(/\/+$/, "");
 
     const apiModel = MODEL_MAP[model] || model;
-    const imageSize = resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K";
-
-    // Build content parts in OpenAI format
-    const contentParts: any[] = [];
-    if (prompt) {
-      contentParts.push({ type: "text", text: prompt });
-    }
-    if (images && images.length > 0) {
-      for (const img of images) {
-        const prefix = img.startsWith("data:") ? img : `data:image/png;base64,${img}`;
-        contentParts.push({ type: "image_url", image_url: { url: prefix } });
-      }
-      if (!prompt) {
-        contentParts.unshift({ type: "text", text: "Based on the reference image(s), generate a similar image." });
-      }
-    }
-    if (contentParts.length === 0) {
-      return new Response(
-        JSON.stringify({ error: "请提供提示词或参考图" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Determine endpoint and auth
-    let chatUrl: string;
-    let headers: Record<string, string>;
     const isGoogle = baseUrl.includes("generativelanguage.googleapis.com");
 
+    let chatUrl: string;
+    let requestBody: Record<string, any>;
+    let reqHeaders: Record<string, string>;
+
     if (isGoogle) {
-      // Google's OpenAI-compatible endpoint
-      chatUrl = `${baseUrl}/v1beta/openai/chat/completions`;
-      headers = {
+      // Google Gemini native API
+      chatUrl = `${baseUrl}/v1beta/models/${apiModel}:generateContent`;
+
+      // Build native Gemini content parts
+      const parts: any[] = [];
+      if (prompt) parts.push({ text: prompt });
+      if (images && images.length > 0) {
+        for (const img of images) {
+          const raw = img.startsWith("data:") ? img.split(",")[1] : img;
+          parts.push({ inlineData: { mimeType: "image/png", data: raw } });
+        }
+        if (!prompt) parts.unshift({ text: "Based on the reference image(s), generate a similar image." });
+      }
+      if (parts.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "请提供提示词或参考图" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      requestBody = {
+        contents: [{ parts }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+        },
+      };
+      if (aspect_ratio) {
+        requestBody.generationConfig.imageConfig = { aspectRatio: aspect_ratio };
+      }
+
+      reqHeaders = {
         "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
+        "x-goog-api-key": apiKey,
       };
     } else {
-      // Third-party proxy
+      // Third-party proxy (OpenAI-compatible)
       chatUrl = `${baseUrl}/v1/chat/completions`;
-      headers = {
-        "Content-Type": "application/json",
-        "Authorization": `Bearer ${apiKey}`,
-      };
-    }
+      const imageSize = resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K";
 
-    // Build request body
-    const requestBody: Record<string, any> = {
-      model: apiModel,
-      messages: [{ role: "user", content: contentParts }],
-      modalities: ["text", "image"],
-      n: num_images || 1,
-    };
+      const contentParts: any[] = [];
+      if (prompt) contentParts.push({ type: "text", text: prompt });
+      if (images && images.length > 0) {
+        for (const img of images) {
+          const prefix = img.startsWith("data:") ? img : `data:image/png;base64,${img}`;
+          contentParts.push({ type: "image_url", image_url: { url: prefix } });
+        }
+        if (!prompt) contentParts.unshift({ type: "text", text: "Based on the reference image(s), generate a similar image." });
+      }
+      if (contentParts.length === 0) {
+        return new Response(
+          JSON.stringify({ error: "请提供提示词或参考图" }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
 
-    // Only add custom fields for non-Google (third-party proxy) endpoints
-    if (!isGoogle) {
-      requestBody.image_config = {
-        image_size: imageSize,
-        aspect_ratio: aspect_ratio,
-      };
-      requestBody.generation_config = {
-        response_modalities: ["Text", "Image"],
-        image_generation_config: {
-          image_size: imageSize,
-          aspect_ratio: aspect_ratio,
+      requestBody = {
+        model: apiModel,
+        messages: [{ role: "user", content: contentParts }],
+        modalities: ["text", "image"],
+        n: num_images || 1,
+        image_config: { image_size: imageSize, aspect_ratio },
+        generation_config: {
+          response_modalities: ["Text", "Image"],
+          image_generation_config: { image_size: imageSize, aspect_ratio },
         },
       };
       if (web_search) requestBody.web_search = true;
       if (thinking_level) requestBody.thinking_level = thinking_level;
+
+      reqHeaders = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      };
     }
 
-    console.log("Request:", chatUrl, "model:", apiModel, "imageSize:", imageSize);
+    console.log("Request:", chatUrl, "model:", apiModel, "isGoogle:", isGoogle);
 
     const response = await fetch(chatUrl, {
       method: "POST",
-      headers,
+      headers: reqHeaders,
       body: JSON.stringify(requestBody),
     });
 

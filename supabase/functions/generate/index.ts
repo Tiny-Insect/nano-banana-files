@@ -210,31 +210,39 @@ serve(async (req) => {
       );
     }
 
-    const requestBody: Record<string, any> = {
-      model: apiModel,
-      messages: [{ role: "user", content: contentParts }],
-      modalities: ["text", "image"],
-      n: num_images || 1,
-    };
+    let requestBody: Record<string, any>;
 
-    // Only add these fields for custom API (not Lovable AI Gateway)
     if (useCustom) {
-      requestBody.image_config = {
-        image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
-        aspect_ratio: aspect_ratio,
-      };
-      requestBody.generation_config = {
-        response_modalities: ["Text", "Image"],
-        image_generation_config: {
+      // Custom API: include all compatibility fields
+      requestBody = {
+        model: apiModel,
+        messages: [{ role: "user", content: contentParts }],
+        modalities: ["text", "image"],
+        n: num_images || 1,
+        image_config: {
           image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
           aspect_ratio: aspect_ratio,
+        },
+        generation_config: {
+          response_modalities: ["Text", "Image"],
+          image_generation_config: {
+            image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
+            aspect_ratio: aspect_ratio,
+          },
         },
       };
       if (web_search) requestBody.web_search = true;
       if (thinking_level) requestBody.thinking_level = thinking_level;
+    } else {
+      // Lovable AI Gateway: clean OpenAI-compatible format only
+      requestBody = {
+        model: apiModel,
+        messages: [{ role: "user", content: contentParts }],
+        n: num_images || 1,
+      };
     }
 
-    console.log("Request:", chatUrl, "model:", apiModel);
+    console.log("useCustom:", useCustom, "chatUrl:", chatUrl, "model:", apiModel);
 
     const response = await fetch(chatUrl, {
       method: "POST",

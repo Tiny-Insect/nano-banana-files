@@ -597,6 +597,10 @@ export default function Assets() {
           onReGenerate={handleReGenerate}
           onDownload={handleDownload}
           onLocate={handleLocate}
+          onDelete={(taskId) => {
+            setTasks((prev) => prev.filter((t) => t.id !== taskId));
+            toast({ title: "已删除" });
+          }}
         />
       )}
     </Layout>

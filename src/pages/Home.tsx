@@ -363,7 +363,9 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                 </div>
               </div>
             );
-          })}
+          });
+          })()}
+        </div>
         </div>
       )}
 

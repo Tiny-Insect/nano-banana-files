@@ -42,6 +42,7 @@ export function saveSettings(settings: AppSettings) {
 const navItems = [
   { path: "/", label: "生成", icon: Wand2 },
   { path: "/assets", label: "资产", icon: ImageIcon },
+  { path: "/trash", label: "最近删除", icon: Trash2 },
 ];
 
 export default function Layout({ children }: { children: React.ReactNode }) {

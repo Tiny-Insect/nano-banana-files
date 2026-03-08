@@ -51,6 +51,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/assets" element={<Assets />} />
+              <Route path="/trash" element={<RecentlyDeleted />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

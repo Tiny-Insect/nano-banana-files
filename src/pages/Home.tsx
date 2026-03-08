@@ -1212,8 +1212,8 @@ export default function Home() {
                 <AlertTriangle className="w-4 h-4 text-destructive" />
               </div>
               <div>
-                <p className="text-sm font-medium">确认删除</p>
-                <p className="text-xs text-muted-foreground mt-0.5">该任务将移至「最近删除」，可随时找回</p>
+                <p className="text-sm font-medium">删除任务</p>
+                <p className="text-xs text-muted-foreground mt-0.5">选择从队列移除（资产库仍保留）或移至最近删除</p>
               </div>
             </div>
             {/* Show task thumbnails instead of prompt */}

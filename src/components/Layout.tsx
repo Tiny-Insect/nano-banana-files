@@ -45,11 +45,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dark, setDark] = useState(() => isDarkMode());
+  const [apiInfoOpen, setApiInfoOpen] = useState(false);
 
   useEffect(() => {
     const handler = () => setSettings(loadSettings());
+    const themeHandler = () => setDark(isDarkMode());
     window.addEventListener("settings-updated", handler);
-    return () => window.removeEventListener("settings-updated", handler);
+    window.addEventListener("theme-changed", themeHandler);
+    return () => {
+      window.removeEventListener("settings-updated", handler);
+      window.removeEventListener("theme-changed", themeHandler);
+    };
   }, []);
 
   const handleSave = () => {

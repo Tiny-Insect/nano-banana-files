@@ -89,7 +89,7 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
   return { error: "未返回图片", raw: data };
 }
 
-function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, onDownload, onLocate }: {
+function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, onDownload, onLocate, onDelete }: {
   image: AssetImage;
   onClose: () => void;
   onUsePrompt: (p: string) => void;
@@ -97,8 +97,11 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
   onReGenerate: (task: GenerationTask) => void;
   onDownload: (url: string, index: number) => void;
   onLocate: (taskId: string) => void;
+  onDelete: (taskId: string) => void;
 }) {
+  const { toast } = useToast();
   const [visible, setVisible] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const modelLabel = MODEL_LABELS[image.model] || image.model;
 
   useState(() => {
@@ -107,7 +110,36 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
 
   const handleClose = () => {
     setVisible(false);
-    setTimeout(onClose, 200);
+    setTimeout(onClose, 250);
+  };
+
+  const handleCopyPrompt = async () => {
+    if (!image.prompt) return;
+    try {
+      await navigator.clipboard.writeText(image.prompt);
+      toast({ title: "已复制到剪贴板" });
+    } catch {
+      // Fallback
+      const ta = document.createElement("textarea");
+      ta.value = image.prompt;
+      ta.style.position = "fixed";
+      ta.style.opacity = "0";
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand("copy");
+      document.body.removeChild(ta);
+      toast({ title: "已复制到剪贴板" });
+    }
+  };
+
+  const handleConfirmDelete = () => {
+    setShowDeleteConfirm(false);
+    // Smooth fade out then delete
+    setVisible(false);
+    setTimeout(() => {
+      onDelete(image.taskId);
+      onClose();
+    }, 300);
   };
 
   const src = image.imageUrl.startsWith("data:") || image.imageUrl.startsWith("http")
@@ -116,7 +148,7 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
 
   return (
     <div
-      className={`fixed inset-0 z-[100] flex transition-all duration-200 ${visible ? "bg-black/70 backdrop-blur-md" : "bg-black/0"}`}
+      className={`fixed inset-0 z-[100] flex transition-all duration-300 ${visible ? "bg-black/70 backdrop-blur-md" : "bg-black/0"}`}
       onClick={handleClose}
     >
       {/* Left: Image */}
@@ -134,10 +166,10 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
         className={`w-80 bg-card/95 backdrop-blur-xl border-l border-border/30 flex flex-col overflow-y-auto custom-scrollbar transition-all duration-300 ${visible ? "translate-x-0 opacity-100" : "translate-x-full opacity-0"}`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-5 flex-1 space-y-5">
+        <div className="p-5 flex-1 flex flex-col space-y-5">
           {/* Header */}
           <div className="flex items-center justify-between">
-            <h3 className="text-sm font-semibold">图片详情</h3>
+            <h3 className="text-base font-semibold">图片详情</h3>
             <button
               onClick={handleClose}
               className="w-7 h-7 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
@@ -149,8 +181,17 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
           {/* Prompt */}
           {image.prompt && (
             <div>
-              <p className="text-[11px] text-muted-foreground/60 mb-1.5">提示词</p>
-              <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap break-words bg-muted/20 rounded-lg p-3 max-h-40 overflow-y-auto custom-scrollbar">
+              <div className="flex items-center justify-between mb-2">
+                <p className="text-xs text-muted-foreground/70 font-medium">提示词</p>
+                <button
+                  onClick={handleCopyPrompt}
+                  className="flex items-center gap-1 px-2 py-0.5 rounded-md text-[11px] text-primary/70 hover:text-primary hover:bg-primary/10 transition-colors"
+                >
+                  <ClipboardCopy className="w-3 h-3" />
+                  复制
+                </button>
+              </div>
+              <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap break-words bg-muted/20 rounded-lg p-3 max-h-44 overflow-y-auto custom-scrollbar">
                 {image.prompt}
               </p>
             </div>
@@ -158,8 +199,8 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
 
           {/* Parameters */}
           <div>
-            <p className="text-[11px] text-muted-foreground/60 mb-1.5">参数</p>
-            <div className="space-y-2 bg-muted/20 rounded-lg p-3">
+            <p className="text-xs text-muted-foreground/70 font-medium mb-2">参数</p>
+            <div className="space-y-2.5 bg-muted/20 rounded-lg p-3">
               {[
                 ["模型", modelLabel],
                 ["比例", image.aspectRatio],
@@ -168,8 +209,8 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
                 ...(image.model !== "nanobanana-pro" ? [["思考模式", image.thinkingLevel === "deep" ? "深度" : "快速"]] : []),
               ].map(([label, value]) => (
                 <div key={label} className="flex items-center justify-between">
-                  <span className="text-[11px] text-muted-foreground/60">{label}</span>
-                  <span className="text-[11px] text-foreground/80">{value}</span>
+                  <span className="text-xs text-muted-foreground/60">{label}</span>
+                  <span className="text-xs text-foreground/80">{value}</span>
                 </div>
               ))}
             </div>
@@ -177,60 +218,121 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
 
           {/* Time */}
           <div>
-            <p className="text-[11px] text-muted-foreground/60 mb-1.5">时间</p>
-            <div className="bg-muted/20 rounded-lg p-3 space-y-1">
+            <p className="text-xs text-muted-foreground/70 font-medium mb-2">时间</p>
+            <div className="bg-muted/20 rounded-lg p-3 space-y-2">
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground/60">创建</span>
-                <span className="text-[11px] text-foreground/80">{formatDate(image.createdAt)}</span>
+                <span className="text-xs text-muted-foreground/60">创建</span>
+                <span className="text-xs text-foreground/80">{formatDate(image.createdAt)}</span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-[11px] text-muted-foreground/60">完成</span>
-                <span className="text-[11px] text-foreground/80">{formatDate(image.completedAt)}</span>
+                <span className="text-xs text-muted-foreground/60">完成</span>
+                <span className="text-xs text-foreground/80">{formatDate(image.completedAt)}</span>
               </div>
             </div>
           </div>
 
           {/* Actions */}
           <div className="space-y-1.5">
-            <p className="text-[11px] text-muted-foreground/60 mb-1.5">操作</p>
+            <p className="text-xs text-muted-foreground/70 font-medium mb-2">操作</p>
             <button
               onClick={() => { onUsePrompt(image.prompt); handleClose(); }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
             >
-              <Copy className="w-3.5 h-3.5" />
+              <Copy className="w-4 h-4" />
               使用提示词
             </button>
             <button
               onClick={() => { onReEdit(image.task); handleClose(); }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
             >
-              <Pencil className="w-3.5 h-3.5" />
+              <Pencil className="w-4 h-4" />
               重新编辑
             </button>
             <button
               onClick={() => onReGenerate(image.task)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
             >
-              <RefreshCw className="w-3.5 h-3.5" />
+              <RefreshCw className="w-4 h-4" />
               再次生成
             </button>
             <button
-              onClick={() => onDownload(src, image.imageIndex)}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
-            >
-              <Download className="w-3.5 h-3.5" />
-              下载原图
-            </button>
-            <button
               onClick={() => { onLocate(image.taskId); handleClose(); }}
-              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
+              className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/40 transition-colors border border-border/20"
             >
-              <MapPin className="w-3.5 h-3.5" />
+              <MapPin className="w-4 h-4" />
               定位到生成界面
             </button>
           </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Bottom: Download + Delete */}
+          <div className="flex gap-2 pt-3 border-t border-border/20">
+            <Button
+              onClick={() => onDownload(src, image.imageIndex)}
+              className="flex-1 h-11 text-sm font-medium gap-2"
+            >
+              <Download className="w-4 h-4" />
+              下载原图
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => setShowDeleteConfirm(true)}
+              className="flex-1 h-11 text-sm font-medium gap-2"
+            >
+              <Trash2 className="w-4 h-4" />
+              删除
+            </Button>
+          </div>
         </div>
       </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div
+          className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150"
+          onClick={() => setShowDeleteConfirm(false)}
+        >
+          <div
+            className="bg-card border border-border/50 rounded-xl p-5 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-150"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">确认删除</p>
+                <p className="text-xs text-muted-foreground mt-0.5">删除后无法找回，包括关联的生成图片</p>
+              </div>
+            </div>
+            {image.prompt && (
+              <p className="text-xs text-muted-foreground/70 bg-muted/30 rounded-md px-3 py-2 mb-4 truncate">
+                "{image.prompt}"
+              </p>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-4 text-xs"
+                onClick={() => setShowDeleteConfirm(false)}
+              >
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 px-4 text-xs"
+                onClick={handleConfirmDelete}
+              >
+                删除
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

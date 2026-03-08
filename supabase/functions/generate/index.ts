@@ -208,8 +208,15 @@ serve(async (req) => {
 
       const contentParts: any[] = [];
       if (prompt) contentParts.push({ type: "text", text: prompt });
-      if (images && images.length > 0) {
-        for (const img of images) {
+      // Use URLs for third-party proxies too
+      if (refImageUrls.length > 0) {
+        for (const url of refImageUrls) {
+          contentParts.push({ type: "image_url", image_url: { url } });
+        }
+        if (!prompt) contentParts.unshift({ type: "text", text: "Based on the reference image(s), generate a similar image." });
+      }
+      if (refImageBase64.length > 0) {
+        for (const img of refImageBase64) {
           const prefix = img.startsWith("data:") ? img : `data:image/png;base64,${img}`;
           contentParts.push({ type: "image_url", image_url: { url: prefix } });
         }

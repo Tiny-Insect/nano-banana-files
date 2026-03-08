@@ -848,10 +848,10 @@ export default function Home() {
                   </Button>
                 </div>
 
-                <div className="border-t border-border/15 px-4 py-2.5 flex flex-wrap items-center gap-2">
+                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3">
                   <ModelToggle model={model} onChange={handleModelChange} />
 
-                  <span className="w-px h-5 bg-border/20" />
+                  <span className="w-px h-6 bg-border/20" />
 
                   <Popover open={ratioOpen} onOpenChange={setRatioOpen}>
                     <PopoverTrigger asChild>

@@ -17,6 +17,16 @@ function getCustomApiHeaders(): Record<string, string> {
   return headers;
 }
 
+async function callGenerateApi(body: Record<string, any>): Promise<any> {
+  const customHeaders = getCustomApiHeaders();
+  const { data, error } = await supabase.functions.invoke("generate", {
+    body,
+    headers: customHeaders,
+  });
+  if (error) throw error;
+  return data;
+}
+
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
   const [w, h] = ratio.split(":").map(Number);
   const maxSize = 22;

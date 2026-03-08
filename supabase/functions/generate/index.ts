@@ -174,7 +174,7 @@ serve(async (req) => {
       };
     }
 
-    console.log("Request:", chatUrl, "model:", apiModel, "isGoogle:", isGoogle);
+    console.log("Request:", chatUrl, "model:", apiModel, "isGoogle:", isGoogle, "webSearch:", web_search, "thinkingLevel:", thinking_level);
 
     const response = await fetch(chatUrl, {
       method: "POST",

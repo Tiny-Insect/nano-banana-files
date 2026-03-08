@@ -519,6 +519,18 @@ export default function Home() {
   const prevTaskCountRef = useRef(tasks.length);
   const prevLastTaskRef = useRef<string | null>(null);
   const isPro = model === "nanobanana-pro";
+  const [colorProgress, setColorProgress] = useState(isPro ? 1 : 0);
+
+  // Smooth interpolated accent color based on model toggle animation
+  const blueH = 217, blueS = 91, blueL = 60;
+  const goldH = 40, goldS = 92, goldL = 55;
+  const accentH = blueH + (goldH - blueH) * colorProgress;
+  const accentS = blueS + (goldS - blueS) * colorProgress;
+  const accentL = blueL + (goldL - blueL) * colorProgress;
+  const smoothAccent = `hsl(${accentH}, ${accentS}%, ${accentL}%)`;
+  const smoothAccentBg = `hsl(${accentH}, ${accentS}%, ${accentL}%, 0.1)`;
+  const smoothAccentGradient = `linear-gradient(135deg, hsl(${accentH}, ${accentS}%, ${accentL}%), hsl(${accentH + 8}, ${accentS - 5}%, ${accentL - 4}%))`;
+
   const accentActiveClass = isPro ? "text-pro-accent bg-pro-accent/10" : "text-primary bg-primary/10";
 
   const [searchParams, setSearchParams] = useSearchParams();

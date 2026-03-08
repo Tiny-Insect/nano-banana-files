@@ -107,7 +107,25 @@ app.on("second-instance", () => {
   }
 });
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  // Window control IPC handlers
+  ipcMain.on("window-minimize", () => mainWindow?.minimize());
+  ipcMain.on("window-maximize", () => {
+    if (mainWindow?.isMaximized()) {
+      mainWindow.unmaximize();
+    } else {
+      mainWindow?.maximize();
+    }
+  });
+  ipcMain.on("window-close", () => mainWindow?.close());
+  ipcMain.handle("window-is-maximized", () => mainWindow?.isMaximized() ?? false);
+
+  createWindow();
+
+  // Forward maximize events to renderer
+  mainWindow.on("maximize", () => mainWindow.webContents.send("window-maximized"));
+  mainWindow.on("unmaximize", () => mainWindow.webContents.send("window-unmaximized"));
+});
 
 // macOS: re-create window when dock icon clicked
 app.on("activate", () => {

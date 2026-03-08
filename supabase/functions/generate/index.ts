@@ -12,93 +12,9 @@ const MODEL_MAP: Record<string, string> = {
   "nanobanana-pro": "gemini-3-pro-image-preview",
 };
 
-function extractImagesFromResponse(data: any): string[] {
-  const images: string[] = [];
-
-  // Official Gemini native format
-  if (data.candidates && Array.isArray(data.candidates)) {
-    for (const candidate of data.candidates) {
-      if (candidate.content && Array.isArray(candidate.content.parts)) {
-        for (const part of candidate.content.parts) {
-          if (part.inlineData && part.inlineData.data) {
-            images.push(
-              `data:${part.inlineData.mimeType || "image/png"};base64,${part.inlineData.data}`
-            );
-          } else if (part.inline_data && part.inline_data.data) {
-            images.push(
-              `data:${part.inline_data.mime_type || "image/png"};base64,${part.inline_data.data}`
-            );
-          }
-        }
-      }
-    }
-  }
-
-  // OpenAI-compatible format (for third-party proxies)
-  if (data.choices && Array.isArray(data.choices)) {
-    for (const choice of data.choices) {
-      const msg = choice.message;
-      if (!msg) continue;
-
-      // Handle message.images array (Google OpenAI-compatible format)
-      if (msg.images && Array.isArray(msg.images)) {
-        for (const imgObj of msg.images) {
-          if (imgObj.image_url?.url) images.push(imgObj.image_url.url);
-          else if (imgObj.url) images.push(imgObj.url);
-        }
-      }
-
-      const content = msg.content;
-      if (!content) continue;
-
-      if (typeof content === "string") {
-        const base64Match = content.match(
-          /data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g
-        );
-        if (base64Match) images.push(...base64Match);
-        continue;
-      }
-
-      if (Array.isArray(content)) {
-        for (const part of content) {
-          if (!part) continue;
-          if (part.type === "image_url" && part.image_url?.url) {
-            images.push(part.image_url.url);
-          } else if (part.type === "image_url" && typeof part.image_url === "string") {
-            images.push(part.image_url);
-          } else if (part.type === "image" && part.image?.url) {
-            images.push(part.image.url);
-          } else if (part.type === "image" && part.url) {
-            images.push(part.url);
-          } else if (part.type === "image" && part.data) {
-            images.push(`data:image/png;base64,${part.data}`);
-          } else if (part.type === "image" && part.source?.data) {
-            images.push(
-              `data:image/${part.source.media_type || "png"};base64,${part.source.data}`
-            );
-          } else if (part.b64_json) {
-            images.push(`data:image/png;base64,${part.b64_json}`);
-          } else if (part.type === "text" && typeof part.text === "string") {
-            const b64 = part.text.match(
-              /data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g
-            );
-            if (b64) images.push(...b64);
-          }
-        }
-      }
-    }
-  }
-
-  // images/generations format
-  if (data.data && Array.isArray(data.data)) {
-    for (const d of data.data) {
-      if (d.url) images.push(d.url);
-      if (d.b64_json) images.push(`data:image/png;base64,${d.b64_json}`);
-    }
-  }
-
-  return images;
-}
+// Note: extractImagesFromResponse was removed to save memory.
+// Images are now extracted directly from raw response text via regex
+// and uploaded to Storage to avoid OOM with large 4K base64 images.
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {

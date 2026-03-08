@@ -10,6 +10,7 @@ import { useGenerationStore, type GenerationTask, type ModelType } from "@/lib/g
 import { callGenerateApi, executeGeneration, downloadOriginalImage } from "@/lib/api";
 import { formatDate, resolveImageSrc } from "@/lib/format";
 import ImageLightbox, { type LightboxImage } from "@/components/ImageLightbox";
+import { triggerDownloadNotification } from "@/components/DownloadNotification";
 
 const MODEL_LABELS: Record<string, string> = {
   "nanobanana-2": "NanoBanana 2",

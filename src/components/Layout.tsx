@@ -151,7 +151,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-muted-foreground mb-1 block">API Key</label>
+                      <label className="text-xs text-muted-foreground mb-1 block">API Key</label>
                       <div className="relative">
                         <input
                           type={showKey ? "text" : "password"}

@@ -104,9 +104,9 @@ export class DesktopStorage implements StorageAdapter {
       }
     }
 
-    // Return file:// URLs for local display
-    const originalUrl = `file://${originalPath}`;
-    const thumbnailUrl = `file://${thumbPath}`;
+    // Return local-file:// URLs for secure local display via custom protocol
+    const originalUrl = `local-file://${originalPath}`;
+    const thumbnailUrl = `local-file://${thumbPath}`;
 
     return { id, originalUrl, thumbnailUrl, mimeType, size: blob.size };
   }
@@ -124,7 +124,7 @@ export class DesktopStorage implements StorageAdapter {
     const base64 = await blobToBase64(blob);
     await electronAPI.fsWriteFile(filePath, base64);
 
-    return `file://${filePath}`;
+    return `local-file://${filePath}`;
   }
 
   async downloadImage(imageUrl: string, filename: string): Promise<void> {
@@ -147,9 +147,9 @@ export class DesktopStorage implements StorageAdapter {
   private async _saveToDir(imageUrl: string, dir: string, filename: string): Promise<void> {
     const filePath = `${dir}/${filename}`;
 
-    if (imageUrl.startsWith("file://")) {
+    if (imageUrl.startsWith("local-file://") || imageUrl.startsWith("file://")) {
       // Local file - read and copy
-      const localPath = imageUrl.replace("file://", "");
+      const localPath = imageUrl.replace("local-file://", "").replace("file://", "");
       const base64 = await electronAPI.fsReadFile(localPath);
       if (base64) {
         await electronAPI.fsWriteFile(filePath, base64);

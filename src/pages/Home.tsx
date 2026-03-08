@@ -653,6 +653,7 @@ export default function Home() {
       numImages,
       status: "creating",
       generatedImages: [],
+      thumbnails: [],
       createdAt: Date.now(),
       webSearch,
       thinkingLevel,

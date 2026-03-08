@@ -814,8 +814,10 @@ export default function Home() {
           className="fixed bottom-0 left-0 right-0 px-6 pb-5 z-30"
         >
           <div className="max-w-3xl mx-auto">
+          <TooltipProvider delayDuration={300}>
           <div 
-            className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl"
+            className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl transition-colors duration-500"
+            style={isPro ? { borderColor: "hsl(var(--pro-accent) / 0.15)" } : undefined}
           >
               <>
                 <div className="flex items-start gap-3 p-5 pb-3">
@@ -825,31 +827,35 @@ export default function Home() {
                     accept="image/*"
                     className="hidden"
                     onChange={handleImageUpload}
+                    multiple
                   />
 
                   <div className="shrink-0 flex items-end">
-                    <div className="flex items-end">
+                    <div className="flex items-end gap-1">
                       {referenceImagePreviews.map((preview, i) => (
                         <div
                           key={i}
                           className="relative shrink-0 rounded-lg overflow-hidden border border-border/40 transition-all duration-300 ease-out cursor-pointer group/img"
                           style={{
-                            width: 48,
-                            height: 48,
-                            marginLeft: i > 0 ? -12 : 0,
+                            width: 44,
+                            height: 58,
+                            marginLeft: i > 0 ? -8 : 0,
                             zIndex: i,
+                            transform: "rotate(-15deg)",
                           }}
                           onMouseEnter={(e) => {
                             const el = e.currentTarget;
-                            el.style.width = "60px";
-                            el.style.height = "60px";
+                            el.style.width = "52px";
+                            el.style.height = "68px";
                             el.style.zIndex = "20";
+                            el.style.transform = "rotate(-12deg) scale(1.05)";
                           }}
                           onMouseLeave={(e) => {
                             const el = e.currentTarget;
-                            el.style.width = "48px";
-                            el.style.height = "48px";
+                            el.style.width = "44px";
+                            el.style.height = "58px";
                             el.style.zIndex = String(i);
+                            el.style.transform = "rotate(-15deg)";
                           }}
                         >
                           <img
@@ -869,10 +875,23 @@ export default function Home() {
                       {referenceImages.length < 10 && (
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-12 h-12 rounded-lg border border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground/30 shrink-0 transition-colors hover:border-muted-foreground/40"
-                          style={{ marginLeft: referenceImagePreviews.length > 0 ? -4 : 0 }}
+                          onDrop={handleDrop}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          className={`flex flex-col items-center justify-center rounded-lg border border-dashed shrink-0 transition-all duration-300 ${
+                            isDragOver
+                              ? "border-primary bg-primary/10 scale-110"
+                              : "border-muted-foreground/20 hover:border-muted-foreground/40 hover:scale-105"
+                          }`}
+                          style={{
+                            width: 44,
+                            height: 58,
+                            marginLeft: referenceImagePreviews.length > 0 ? -2 : 0,
+                            transform: "rotate(-15deg)",
+                          }}
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5 text-muted-foreground/30" />
+                          <span className="text-[8px] text-muted-foreground/25 mt-0.5 leading-none">参考图</span>
                         </button>
                       )}
                     </div>
@@ -883,44 +902,54 @@ export default function Home() {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="输入提示词..."
-                    className="flex-1 bg-transparent border-0 outline-none resize-none text-base min-h-[72px] max-h-[180px] py-3 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
+                    placeholder="输入提示词...  Ctrl+Enter 发送"
+                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[72px] max-h-[180px] py-3 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar font-sans tracking-wide leading-relaxed"
                     rows={2}
                   />
 
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={!canGenerate}
-                    size="icon"
-                    className="shrink-0 mt-1 rounded-lg w-11 h-11"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={handleGenerate}
+                        disabled={!canGenerate}
+                        size="icon"
+                        className="shrink-0 mt-1 rounded-lg w-11 h-11 transition-all duration-500"
+                        style={isPro ? {
+                          background: "linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.85))",
+                        } : undefined}
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      发送 <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px]">Ctrl+↵</kbd>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
-                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3">
+                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3 font-sans tracking-wide">
                   <ModelToggle model={model} onChange={handleModelChange} />
 
                   <span className="w-px h-6 bg-border/20" />
 
                   <Popover open={ratioOpen} onOpenChange={setRatioOpen}>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground tracking-wide">
                         <RatioIcon ratio={aspectRatio} active={false} />
                         {aspectRatio}
                         <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="start">
+                    <PopoverContent className="w-auto p-2.5 bg-card/80 backdrop-blur-xl border-border/30 shadow-2xl animate-in zoom-in-95 fade-in duration-200" align="start">
                       <div className="flex flex-wrap gap-1" style={{ maxWidth: 360 }}>
                         {currentRatios.map((ratio) => (
                           <button
                             key={ratio}
                             onClick={() => { setAspectRatio(ratio); setRatioOpen(false); }}
-                            className={`flex flex-col items-center gap-0.5 w-12 py-1.5 rounded-md text-[11px] transition-colors ${
+                            className={`flex flex-col items-center gap-0.5 w-12 py-1.5 rounded-md text-[10px] font-medium tracking-wide transition-all duration-200 ${
                               aspectRatio === ratio
-                                ? "bg-primary/15 text-primary"
-                                : "text-muted-foreground hover:bg-muted/50"
+                                ? (isPro ? "bg-pro-accent/15 text-pro-accent" : "bg-primary/15 text-primary")
+                                : "text-muted-foreground hover:bg-muted/50 hover:scale-105"
                             }`}
                           >
                             <RatioIcon ratio={ratio} active={aspectRatio === ratio} />
@@ -933,19 +962,19 @@ export default function Home() {
 
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground tracking-wide">
                         {resolution.toUpperCase()}
                         <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-1.5 min-w-[80px]" align="start">
+                    <PopoverContent className="w-auto p-1.5 min-w-[80px] bg-card/80 backdrop-blur-xl border-border/30 shadow-2xl animate-in zoom-in-95 fade-in duration-200" align="start">
                       <div className="flex flex-col gap-0.5">
                         {RESOLUTIONS.map((r) => (
                           <button
                             key={r}
                             onClick={() => setResolution(r)}
-                            className={`px-3 py-1.5 rounded-md text-sm text-left transition-colors ${
-                              resolution === r ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium text-left transition-colors tracking-wide ${
+                              resolution === r ? (isPro ? "bg-pro-accent/15 text-pro-accent" : "bg-primary/15 text-primary") : "text-muted-foreground hover:bg-muted/50"
                             }`}
                           >
                             {r.toUpperCase()}
@@ -957,19 +986,19 @@ export default function Home() {
 
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground tracking-wide">
                         {numImages} 张
                         <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-1.5 min-w-[70px]" align="start">
+                    <PopoverContent className="w-auto p-1.5 min-w-[70px] bg-card/80 backdrop-blur-xl border-border/30 shadow-2xl animate-in zoom-in-95 fade-in duration-200" align="start">
                       <div className="flex flex-col gap-0.5">
                         {[1, 2, 3, 4].map((n) => (
                           <button
                             key={n}
                             onClick={() => setNumImages(n)}
-                            className={`px-3 py-1.5 rounded-md text-sm text-left transition-colors ${
-                              numImages === n ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium text-left transition-colors tracking-wide ${
+                              numImages === n ? (isPro ? "bg-pro-accent/15 text-pro-accent" : "bg-primary/15 text-primary") : "text-muted-foreground hover:bg-muted/50"
                             }`}
                           >
                             {n} 张
@@ -981,28 +1010,28 @@ export default function Home() {
 
                   <button
                     onClick={() => setWebSearch(!webSearch)}
-                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
                       webSearch
-                        ? "text-primary bg-primary/10"
+                        ? accentActiveClass
                         : "text-muted-foreground hover:bg-muted/50"
                     }`}
                     title="联网搜索"
                   >
-                    <Globe className="w-4 h-4" />
+                    <Globe className="w-3.5 h-3.5" />
                     联网
                   </button>
 
                   {model !== "nanobanana-pro" && (
                     <button
                       onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
-                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
                         thinkingLevel === "deep"
-                          ? "text-primary bg-primary/10"
+                          ? accentActiveClass
                           : "text-muted-foreground hover:bg-muted/50"
                       }`}
                       title="深度思考"
                     >
-                      <Brain className="w-4 h-4" />
+                      <Brain className="w-3.5 h-3.5" />
                       思考
                     </button>
                   )}
@@ -1011,6 +1040,7 @@ export default function Home() {
                 </div>
               </>
           </div>
+          </TooltipProvider>
           </div>
         </div>
       </div>

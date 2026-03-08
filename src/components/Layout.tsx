@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { ImageIcon, Wand2, Settings, Eye, EyeOff, Check } from "lucide-react";
+import { ImageIcon, Wand2, Settings, Eye, EyeOff, Check, Sun, Moon, Info } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { toggleTheme, isDarkMode } from "@/App";
 
 const SETTINGS_KEY = "nanobanana_settings";
 
@@ -44,11 +45,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [dark, setDark] = useState(() => isDarkMode());
+  const [apiInfoOpen, setApiInfoOpen] = useState(false);
 
   useEffect(() => {
     const handler = () => setSettings(loadSettings());
+    const themeHandler = () => setDark(isDarkMode());
     window.addEventListener("settings-updated", handler);
-    return () => window.removeEventListener("settings-updated", handler);
+    window.addEventListener("theme-changed", themeHandler);
+    return () => {
+      window.removeEventListener("settings-updated", handler);
+      window.removeEventListener("theme-changed", themeHandler);
+    };
   }, []);
 
   const handleSave = () => {
@@ -79,6 +87,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </Link>
             ))}
 
+            <button
+              onClick={() => { toggleTheme(); }}
+              className="relative w-8 h-8 rounded-md flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors overflow-hidden"
+              title={dark ? "切换亮色模式" : "切换暗色模式"}
+            >
+              <Sun className={`w-3.5 h-3.5 absolute transition-all duration-300 ease-in-out ${dark ? "opacity-0 rotate-90 scale-0" : "opacity-100 rotate-0 scale-100"}`} />
+              <Moon className={`w-3.5 h-3.5 absolute transition-all duration-300 ease-in-out ${dark ? "opacity-100 rotate-0 scale-100" : "opacity-0 -rotate-90 scale-0"}`} />
+            </button>
+
             <Popover>
               <PopoverTrigger asChild>
                 <button
@@ -93,7 +110,38 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   <p className="text-xs font-medium">API 配置</p>
                   <div className="space-y-2">
                     <div>
-                      <label className="text-[11px] text-muted-foreground mb-1 block">API URL</label>
+                      <div className="flex items-center gap-1 mb-1">
+                        <label className="text-[11px] text-muted-foreground">API URL</label>
+                        <Popover open={apiInfoOpen} onOpenChange={setApiInfoOpen}>
+                          <PopoverTrigger asChild>
+                            <button className="text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors cursor-pointer">
+                              <Info className="w-3 h-3" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-72 p-3 text-xs" align="start" side="bottom">
+                            <p className="font-medium mb-2">API URL 说明</p>
+                            <div className="space-y-2 text-muted-foreground">
+                              <div>
+                                <p className="font-medium text-foreground/80">🔹 官方 Google API</p>
+                                <code className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded block mt-1 break-all">
+                                  https://generativelanguage.googleapis.com
+                                </code>
+                                <p className="text-[10px] mt-1">完整支持：联网搜索、思考模式、所有比例和分辨率</p>
+                              </div>
+                              <div className="border-t border-border/30 pt-2">
+                                <p className="font-medium text-foreground/80">🔸 第三方代理 API</p>
+                                <code className="text-[10px] bg-muted/50 px-1.5 py-0.5 rounded block mt-1 break-all">
+                                  https://xxx.com/v1
+                                </code>
+                                <p className="text-[10px] mt-1">使用 OpenAI 兼容格式。联网搜索、思考模式可能不支持，比例/分辨率取决于代理商的适配程度。</p>
+                              </div>
+                              <p className="text-[10px] text-muted-foreground/60 border-t border-border/30 pt-2">
+                                ⚠️ 切换第三方 API 后如遇到错误，请优先检查该 API 是否支持对应功能。
+                              </p>
+                            </div>
+                          </PopoverContent>
+                        </Popover>
+                      </div>
                       <input
                         type="text"
                         value={settings.customApiUrl}

@@ -1012,7 +1012,7 @@ export default function Home() {
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="text-xs">
-                      发送 <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px]">Ctrl+↵</kbd>
+                      发送 <kbd className="ml-1 px-1.5 py-0.5 rounded bg-muted text-[10px] font-mono">Ctrl+Enter</kbd>
                     </TooltipContent>
                   </Tooltip>
                 </div>

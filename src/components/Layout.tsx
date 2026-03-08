@@ -78,7 +78,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       )}
       <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
-          <span className="select-none pointer-events-none" style={{ fontFamily: "'Pinyon Script', cursive", fontSize: "20px", lineHeight: 1 }}>LumenDust</span>
+          <span className="select-none pointer-events-none" style={{ fontFamily: "'Caveat', cursive", fontSize: "22px", fontWeight: 600, lineHeight: 1 }}>LumenDust</span>
           <div className="flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>

@@ -129,7 +129,7 @@ export class DesktopStorage implements StorageAdapter {
     const base64 = await blobToBase64(blob);
     await electronAPI.fsWriteFile(filePath, base64);
 
-    return `local-file://${filePath}`;
+    return `local-file://${filePath.replace(/\\/g, "/")}`;
   }
 
   async downloadImage(imageUrl: string, filename: string): Promise<void> {

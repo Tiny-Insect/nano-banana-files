@@ -596,7 +596,7 @@ export default function Home() {
       num_images: task.numImages,
       web_search: !!reWebSearch,
       thinking_level: reThinkingLevel || "fast",
-      images: refBase64,
+      image_urls: refBase64,
     };
 
     try {

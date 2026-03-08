@@ -787,6 +787,7 @@ export default function Home() {
       numImages: task.numImages,
       status: "creating",
       generatedImages: [],
+      thumbnails: [],
       createdAt: Date.now(),
       webSearch: reWebSearch,
       thinkingLevel: reThinkingLevel,

@@ -1050,14 +1050,25 @@ export default function Home() {
       {deleteConfirmTask && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150" onClick={() => setDeleteConfirmTask(null)}>
           <div className="bg-card border border-border/50 rounded-xl p-5 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
-                <AlertTriangle className="w-4 h-4 text-destructive" />
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                  <AlertTriangle className="w-4 h-4 text-destructive" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium">删除任务</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">选择从队列移除（资产库仍保留）或移至最近删除</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium">删除任务</p>
-                <p className="text-xs text-muted-foreground mt-0.5">选择从队列移除（资产库仍保留）或移至最近删除</p>
-              </div>
+              {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages?.length > 0 && (
+                <button
+                  className="inline-flex items-center gap-1 text-[11px] text-destructive/70 hover:text-destructive transition-colors shrink-0 ml-2 mt-1"
+                  onClick={confirmDeleteToTrash}
+                >
+                  <Trash2 className="w-3 h-3" />
+                  最近删除
+                </button>
+              )}
             </div>
             {/* Show task thumbnails instead of prompt */}
             {deleteConfirmTask.generatedImages && deleteConfirmTask.generatedImages.length > 0 ? (

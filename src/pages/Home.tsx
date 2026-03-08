@@ -515,6 +515,7 @@ export default function Home() {
   const [isAtBottom, _setIsAtBottom] = useState(true);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
+  const [showClearFailedConfirm, setShowClearFailedConfirm] = useState(false);
   const [isDragOver, setIsDragOver] = useState(false);
   const isAtBottomRef = useRef(true);
   const prevTaskCountRef = useRef(tasks.length);
@@ -1183,10 +1184,7 @@ export default function Home() {
           <Tooltip>
             <TooltipTrigger asChild>
               <button
-                onClick={() => {
-                  setTasks((prev) => prev.filter((t) => t.status !== "error"));
-                  toast({ title: "已删除所有失败任务" });
-                }}
+                onClick={() => setShowClearFailedConfirm(true)}
                 className="fixed bottom-6 right-6 z-40 w-10 h-10 rounded-full bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110"
               >
                 <AlertTriangle className="w-4 h-4" />
@@ -1246,6 +1244,41 @@ export default function Home() {
                 size="sm"
                 className="h-8 px-4 text-xs"
                 onClick={confirmDelete}
+              >
+                删除
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {showClearFailedConfirm && (
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150" onClick={() => setShowClearFailedConfirm(false)}>
+          <div className="bg-card border border-border/50 rounded-xl p-5 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">删除所有失败任务</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  将移除 {tasks.filter((t) => t.status === "error").length} 个失败任务，不影响已完成的任务
+                </p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" className="h-8 px-4 text-xs" onClick={() => setShowClearFailedConfirm(false)}>
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 px-4 text-xs"
+                onClick={() => {
+                  setTasks((prev) => prev.filter((t) => t.status !== "error"));
+                  setShowClearFailedConfirm(false);
+                  toast({ title: "已删除所有失败任务" });
+                }}
               >
                 删除
               </Button>

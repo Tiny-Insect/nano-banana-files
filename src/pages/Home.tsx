@@ -383,7 +383,7 @@ export default function Home() {
   } = store;
 
   const [isAtBottom, setIsAtBottom] = useState(true);
-  const [inputCollapsed, setInputCollapsed] = useState(false);
+  const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
   const isAtBottomRef = useRef(true);

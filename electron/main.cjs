@@ -1,5 +1,6 @@
-const { app, BrowserWindow, shell, ipcMain } = require("electron");
+const { app, BrowserWindow, shell, ipcMain, dialog } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 // Prevent multiple instances
 const gotLock = app.requestSingleInstanceLock();
@@ -119,6 +120,91 @@ app.whenReady().then(() => {
   });
   ipcMain.on("window-close", () => mainWindow?.close());
   ipcMain.handle("window-is-maximized", () => mainWindow?.isMaximized() ?? false);
+
+  // Folder picker dialog
+  ipcMain.handle("select-folder", async (_event, title) => {
+    const result = await dialog.showOpenDialog(mainWindow, {
+      title: title || "选择文件夹",
+      properties: ["openDirectory", "createDirectory"],
+    });
+    if (result.canceled || !result.filePaths.length) return null;
+    return result.filePaths[0];
+  });
+
+  // Get default cache path
+  ipcMain.handle("get-cache-path", () => {
+    return path.join(app.getPath("userData"), "cache");
+  });
+
+  // File system: write file (base64 data)
+  ipcMain.handle("fs-write-file", async (_event, filePath, base64Data) => {
+    try {
+      const dir = path.dirname(filePath);
+      if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true });
+      fs.writeFileSync(filePath, Buffer.from(base64Data, "base64"));
+      return true;
+    } catch (e) {
+      console.error("fs-write-file error:", e);
+      return false;
+    }
+  });
+
+  // File system: read file → base64
+  ipcMain.handle("fs-read-file", async (_event, filePath) => {
+    try {
+      if (!fs.existsSync(filePath)) return null;
+      return fs.readFileSync(filePath).toString("base64");
+    } catch {
+      return null;
+    }
+  });
+
+  // File system: delete file
+  ipcMain.handle("fs-delete-file", async (_event, filePath) => {
+    try {
+      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
+      return true;
+    } catch {
+      return false;
+    }
+  });
+
+  // File system: read directory
+  ipcMain.handle("fs-read-dir", async (_event, dirPath) => {
+    try {
+      if (!fs.existsSync(dirPath)) return [];
+      return fs.readdirSync(dirPath);
+    } catch {
+      return [];
+    }
+  });
+
+  // File system: get total size of directory (bytes)
+  ipcMain.handle("fs-get-size", async (_event, dirPath) => {
+    try {
+      if (!fs.existsSync(dirPath)) return 0;
+      let total = 0;
+      const files = fs.readdirSync(dirPath);
+      for (const file of files) {
+        const fp = path.join(dirPath, file);
+        const stat = fs.statSync(fp);
+        if (stat.isFile()) total += stat.size;
+      }
+      return total;
+    } catch {
+      return 0;
+    }
+  });
+
+  // File system: mkdir recursive
+  ipcMain.handle("fs-mkdir", async (_event, dirPath) => {
+    try {
+      if (!fs.existsSync(dirPath)) fs.mkdirSync(dirPath, { recursive: true });
+      return true;
+    } catch {
+      return false;
+    }
+  });
 
   createWindow();
 

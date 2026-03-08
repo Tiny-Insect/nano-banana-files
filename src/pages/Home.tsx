@@ -109,23 +109,44 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   const btn2Ref = useRef<HTMLButtonElement>(null);
   const [slider, setSlider] = useState({ left: 2, width: 0 });
   const [animPhase, setAnimPhase] = useState<"idle" | "squeeze" | "move" | "expand">("idle");
+  const [direction, setDirection] = useState<"left" | "right">("right");
   const prevModelRef = useRef(model);
-
   const isPro = model === "nanobanana-pro";
-
-  // Color interpolation progress: 0 = blue, 1 = pro-accent
   const [colorProgress, setColorProgress] = useState(isPro ? 1 : 0);
+  const animFrameRef = useRef<number>(0);
+
+  // Smooth color interpolation via requestAnimationFrame
+  const targetColor = useRef(isPro ? 1 : 0);
 
   useEffect(() => {
     if (prevModelRef.current === model) return;
+    const movingRight = model === "nanobanana-pro";
+    setDirection(movingRight ? "right" : "left");
     prevModelRef.current = model;
+    targetColor.current = movingRight ? 1 : 0;
 
-    // Phase 1: squeeze
+    // Phase 1: Directional squeeze
     setAnimPhase("squeeze");
+
+    // Start smooth color interpolation
+    const startColor = colorProgress;
+    const endColor = movingRight ? 1 : 0;
+    const startTime = performance.now();
+    const duration = 500; // total animation duration for color
+
+    const animateColor = (now: number) => {
+      const elapsed = now - startTime;
+      const t = Math.min(elapsed / duration, 1);
+      // ease-in-out
+      const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      setColorProgress(startColor + (endColor - startColor) * ease);
+      if (t < 1) animFrameRef.current = requestAnimationFrame(animateColor);
+    };
+    animFrameRef.current = requestAnimationFrame(animateColor);
+
     setTimeout(() => {
-      // Phase 2: move + color transition
+      // Phase 2: move
       setAnimPhase("move");
-      setColorProgress(isPro ? 1 : 0);
       const activeRef = model === "nanobanana-2" ? btn1Ref : btn2Ref;
       if (activeRef.current && containerRef.current) {
         const containerRect = containerRef.current.getBoundingClientRect();
@@ -133,12 +154,15 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
         setSlider({ left: btnRect.left - containerRect.left, width: btnRect.width });
       }
       setTimeout(() => {
-        // Phase 3: expand back
+        // Phase 3: elastic expand
         setAnimPhase("expand");
-        setTimeout(() => setAnimPhase("idle"), 250);
-      }, 350);
-    }, 150);
-  }, [model, isPro]);
+        setTimeout(() => setAnimPhase("idle"), 280);
+      }, 320);
+    }, 140);
+
+    return () => cancelAnimationFrame(animFrameRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [model]);
 
   // Initial position
   useEffect(() => {
@@ -152,20 +176,35 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const sliderScale =
-    animPhase === "squeeze" ? "scaleX(0.85) scaleY(0.88)" :
-    animPhase === "expand" ? "scaleX(1.04) scaleY(1.02)" : "scaleX(1) scaleY(1)";
+  // Directional squeeze: compress toward movement direction
+  const getSliderTransform = () => {
+    if (animPhase === "squeeze") {
+      // Squeeze toward the direction of travel
+      if (direction === "right") return "scaleX(0.78) scaleY(0.9) translateX(8%)";
+      return "scaleX(0.78) scaleY(0.9) translateX(-8%)";
+    }
+    if (animPhase === "expand") {
+      // Overshoot expand from arrival side
+      if (direction === "right") return "scaleX(1.06) scaleY(1.03) translateX(-1%)";
+      return "scaleX(1.06) scaleY(1.03) translateX(1%)";
+    }
+    return "scaleX(1) scaleY(1) translateX(0)";
+  };
 
   const sliderTransition =
-    animPhase === "squeeze" ? "transform 150ms cubic-bezier(0.4, 0, 1, 1)" :
-    animPhase === "move" ? "all 350ms cubic-bezier(0.4, 0, 0.2, 1)" :
-    animPhase === "expand" ? "transform 250ms cubic-bezier(0, 0, 0.2, 1.2)" :
-    "all 350ms cubic-bezier(0.4, 0, 0.2, 1)";
+    animPhase === "squeeze" ? "transform 140ms cubic-bezier(0.6, 0, 1, 0.8)" :
+    animPhase === "move" ? "all 320ms cubic-bezier(0.4, 0, 0.15, 1)" :
+    animPhase === "expand" ? "transform 280ms cubic-bezier(0, 0.6, 0.3, 1.3)" :
+    "all 320ms cubic-bezier(0.4, 0, 0.2, 1)";
 
-  // Interpolate color via CSS
-  const sliderBg = colorProgress >= 0.5
-    ? `linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.8))`
-    : `hsl(var(--primary))`;
+  // Smooth gradient background based on colorProgress
+  // blue → teal → gold transition
+  const blueH = 217, blueS = 91, blueL = 60;
+  const goldH = 40, goldS = 92, goldL = 55;
+  const midH = blueH + (goldH - blueH) * colorProgress;
+  const midS = blueS + (goldS - blueS) * colorProgress;
+  const midL = blueL + (goldL - blueL) * colorProgress;
+  const sliderBg = `linear-gradient(135deg, hsl(${midH}, ${midS}%, ${midL}%), hsl(${midH + 8}, ${midS - 5}%, ${midL - 4}%))`;
 
   return (
     <div ref={containerRef} className="relative flex items-center bg-muted/30 rounded-md p-0.5 mr-0.5">
@@ -175,8 +214,9 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
           left: slider.left,
           width: slider.width,
           background: sliderBg,
-          transform: sliderScale,
+          transform: getSliderTransform(),
           transition: sliderTransition,
+          transformOrigin: direction === "right" ? "right center" : "left center",
         }}
       />
       <button

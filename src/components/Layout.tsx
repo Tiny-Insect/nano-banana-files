@@ -12,6 +12,8 @@ export interface AppSettings {
   customApiKey: string;
   downloadPrefix: string;
   downloadFormat: string;
+  downloadPath: string;
+  maxCacheMB: number;
 }
 
 const defaultSettings: AppSettings = {
@@ -19,6 +21,8 @@ const defaultSettings: AppSettings = {
   customApiKey: "",
   downloadPrefix: "LumenDust",
   downloadFormat: "png",
+  downloadPath: "",
+  maxCacheMB: 500,
 };
 
 export function loadSettings(): AppSettings {
@@ -68,9 +72,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col relative z-[1]">
+      {apiInfoOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 pointer-events-none" />
+      )}
       <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
-          <span className="text-sm font-semibold tracking-tight">LumenDust</span>
+          <span className="text-sm font-semibold tracking-[0.15em] select-none pointer-events-none" style={{ fontFamily: "'Cormorant SC', serif", fontSize: "15px", letterSpacing: "0.18em" }}>LUMENDUST</span>
           <div className="flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>
@@ -107,18 +114,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </PopoverTrigger>
               <PopoverContent className="w-80 p-3 bg-card/70 backdrop-blur-xl border-border/40 shadow-xl" align="end">
                 <div className="space-y-3">
-                  <p className="text-xs font-medium">API 配置</p>
+                  <p className="text-sm font-medium">API 配置</p>
                   <div className="space-y-2">
                     <div>
                       <div className="flex items-center gap-1 mb-1">
-                        <label className="text-[11px] text-muted-foreground">API URL</label>
+                        <label className="text-xs text-muted-foreground">API URL</label>
                         <Popover open={apiInfoOpen} onOpenChange={setApiInfoOpen}>
                           <PopoverTrigger asChild>
                             <button className="text-muted-foreground/30 hover:text-muted-foreground/70 transition-colors cursor-pointer">
                               <Info className="w-3 h-3" />
                             </button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-72 p-3 text-xs bg-card/70 backdrop-blur-xl border-border/40 shadow-xl" align="start" side="bottom">
+                          <PopoverContent className="w-72 p-3 text-xs bg-card/90 backdrop-blur-2xl border-border/40 shadow-2xl relative z-[200]" align="start" side="bottom">
                             <p className="font-medium mb-2">API URL 说明</p>
                             <div className="space-y-2 text-muted-foreground">
                               <div>
@@ -151,7 +158,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                       />
                     </div>
                     <div>
-                      <label className="text-[11px] text-muted-foreground mb-1 block">API Key</label>
+                      <label className="text-xs text-muted-foreground mb-1 block">API Key</label>
                       <div className="relative">
                         <input
                           type={showKey ? "text" : "password"}
@@ -171,10 +178,10 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </div>
 
                   <div className="border-t border-border/30 pt-3">
-                    <p className="text-xs font-medium mb-2">下载设置</p>
+                    <p className="text-sm font-medium mb-2">下载设置</p>
                     <div className="space-y-2">
                       <div>
-                        <label className="text-[11px] text-muted-foreground mb-1 block">文件名前缀</label>
+                        <label className="text-xs text-muted-foreground mb-1 block">文件名前缀</label>
                         <input
                           type="text"
                           value={settings.downloadPrefix}
@@ -187,7 +194,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                         </p>
                       </div>
                       <div>
-                        <label className="text-[11px] text-muted-foreground mb-1 block">图片格式</label>
+                        <label className="text-xs text-muted-foreground mb-1 block">图片格式</label>
                         <div className="flex gap-1">
                           {["png", "jpg", "webp"].map((fmt) => (
                             <button
@@ -215,8 +222,40 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     {saved ? <><Check className="w-3 h-3 mr-1" />已保存</> : "保存配置"}
                   </Button>
 
+                  <div className="border-t border-border/30 pt-3">
+                    <p className="text-sm font-medium mb-2">缓存设置</p>
+                    <div className="space-y-2">
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">下载保存路径</label>
+                        <input
+                          type="text"
+                          value={(settings as any).downloadPath || ""}
+                          onChange={(e) => setSettings({ ...settings, downloadPath: e.target.value } as any)}
+                          placeholder="默认由浏览器决定（桌面端可指定）"
+                          className="w-full h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 font-mono"
+                        />
+                        <p className="text-[10px] text-muted-foreground/40 mt-0.5">
+                          桌面 App 版本中生效，网页版由浏览器下载设置决定
+                        </p>
+                      </div>
+                      <div>
+                        <label className="text-xs text-muted-foreground mb-1 block">最大缓存 (MB)</label>
+                        <input
+                          type="number"
+                          value={(settings as any).maxCacheMB || 500}
+                          onChange={(e) => setSettings({ ...settings, maxCacheMB: parseInt(e.target.value) || 500 } as any)}
+                          placeholder="500"
+                          className="w-full h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50"
+                        />
+                        <p className="text-[10px] text-muted-foreground/40 mt-0.5">
+                          超过限制将自动清理最早的缓存数据
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                   <div className="border-t border-border/30 pt-2">
-                    <p className="text-xs font-medium mb-1.5">模型</p>
+                    <p className="text-sm font-medium mb-1.5">模型</p>
                     <div className="space-y-1">
                       <div className="flex items-center justify-between">
                         <span className="text-xs text-muted-foreground">NanoBanana 2</span>

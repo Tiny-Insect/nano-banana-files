@@ -223,7 +223,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                         ["比例", task.aspectRatio],
                         ["分辨率", task.resolution.toUpperCase()],
                         ["联网搜索", task.webSearch ? "是" : "否"],
-                        ["思考模式", task.thinkingLevel === "deep" ? "深度" : "快速"],
+                        ...(task.model !== "nanobanana-pro" ? [["思考模式", task.thinkingLevel === "deep" ? "深度" : "快速"]] : []),
                       ].map(([label, value]) => (
                         <div key={label} className="flex items-center justify-between">
                           <span className="text-[11px] text-muted-foreground/60">{label}</span>
@@ -926,18 +926,20 @@ export default function Home() {
                     联网
                   </button>
 
-                  <button
-                    onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
-                    className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
-                      thinkingLevel === "deep"
-                        ? "text-primary bg-primary/10"
-                        : "text-muted-foreground hover:bg-muted/50"
-                    }`}
-                    title="深度思考"
-                  >
-                    <Brain className="w-3.5 h-3.5" />
-                    思考
-                  </button>
+                  {model !== "nanobanana-pro" && (
+                    <button
+                      onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                        thinkingLevel === "deep"
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground hover:bg-muted/50"
+                      }`}
+                      title="深度思考"
+                    >
+                      <Brain className="w-3.5 h-3.5" />
+                      思考
+                    </button>
+                  )}
 
                   <span className="w-px h-5 bg-border/30" />
                 </div>

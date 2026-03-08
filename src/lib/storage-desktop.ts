@@ -105,11 +105,11 @@ export class DesktopStorage implements StorageAdapter {
     }
 
     // Return local-file:// URLs for secure local display via custom protocol
-    // IMPORTANT: Always use forward slashes in URLs, even on Windows
+    // Use standard URL format: local-file://serve/<absolute-path>
     const normalizedOriginal = originalPath.replace(/\\/g, "/");
     const normalizedThumb = thumbPath.replace(/\\/g, "/");
-    const originalUrl = `local-file://${normalizedOriginal}`;
-    const thumbnailUrl = `local-file://${normalizedThumb}`;
+    const originalUrl = `local-file://serve/${normalizedOriginal}`;
+    const thumbnailUrl = `local-file://serve/${normalizedThumb}`;
 
     console.log("[DesktopStorage] Saved image:", { id, originalUrl, thumbnailUrl });
 

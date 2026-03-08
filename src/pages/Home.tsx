@@ -131,7 +131,9 @@ function ModelToggle({ model, onChange, onColorProgress }: { model: string; onCh
       const t = Math.min(elapsed / duration, 1);
       // ease-in-out
       const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      setColorProgress(startColor + (endColor - startColor) * ease);
+      const val = startColor + (endColor - startColor) * ease;
+      setColorProgress(val);
+      onColorProgress?.(val);
       if (t < 1) animFrameRef.current = requestAnimationFrame(animateColor);
     };
     animFrameRef.current = requestAnimationFrame(animateColor);

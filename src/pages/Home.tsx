@@ -726,7 +726,7 @@ export default function Home() {
   return (
     <Layout>
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 overflow-hidden relative">
-        <div ref={feedRef} className="flex-1 py-6 pb-48 overflow-y-auto flex flex-col min-h-0">
+        <div ref={feedRef} className="flex-1 py-6 pb-48 overflow-y-auto flex flex-col min-h-0 custom-scrollbar">
           {tasks.length > 0 ? (
             <div className="mt-auto">
               {tasks.map((task) => (

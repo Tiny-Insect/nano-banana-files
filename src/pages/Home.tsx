@@ -904,8 +904,9 @@ export default function Home() {
     const task = deleteConfirmTask;
     if (!task) return;
     setDeleteConfirmTask(null);
+    const movedToTrash = moveToTrash(task);
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
-    toast({ title: "已删除任务" });
+    toast({ title: movedToTrash ? "已移至最近删除" : "已删除任务" });
   };
 
   return (

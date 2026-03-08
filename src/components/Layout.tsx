@@ -12,6 +12,8 @@ export interface AppSettings {
   customApiKey: string;
   downloadPrefix: string;
   downloadFormat: string;
+  downloadPath: string;
+  maxCacheMB: number;
 }
 
 const defaultSettings: AppSettings = {
@@ -19,6 +21,8 @@ const defaultSettings: AppSettings = {
   customApiKey: "",
   downloadPrefix: "LumenDust",
   downloadFormat: "png",
+  downloadPath: "",
+  maxCacheMB: 500,
 };
 
 export function loadSettings(): AppSettings {

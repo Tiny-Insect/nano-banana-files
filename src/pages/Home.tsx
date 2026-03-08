@@ -555,47 +555,21 @@ export default function Home() {
     }
   }, [searchParams, setSearchParams]);
 
+  // Auto-scroll to bottom on initial load only
   useEffect(() => {
     requestAnimationFrame(() => {
       feedEndRef.current?.scrollIntoView();
     });
   }, []);
 
+  // Auto-scroll when new tasks are added
   useEffect(() => {
     const newCount = tasks.length;
-    const lastTask = tasks.length > 0 ? tasks[tasks.length - 1] : null;
-    const lastTaskKey = lastTask ? `${lastTask.id}-${lastTask.status}-${lastTask.generatedImages.length}` : null;
-
     if (newCount > prevTaskCountRef.current) {
-      feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else if (isAtBottomRef.current && lastTaskKey !== prevLastTaskRef.current && newCount === prevTaskCountRef.current) {
       feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
     prevTaskCountRef.current = newCount;
-    prevLastTaskRef.current = lastTaskKey;
   }, [tasks]);
-
-  useEffect(() => {
-    const el = feedRef.current;
-    if (!el) return;
-    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
-    const onScroll = () => {
-      if (scrollTimer) clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => {
-        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-        isAtBottomRef.current = atBottom;
-        setIsAtBottom(atBottom);
-      }, 50);
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      if (scrollTimer) clearTimeout(scrollTimer);
-    };
-  }, []);
-
-  const scrollToBottom = useCallback(() => {
-    feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
 
   const [ratioOpen, setRatioOpen] = useState(false);

@@ -72,6 +72,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen flex flex-col relative z-[1]">
+      {apiInfoOpen && (
+        <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 pointer-events-none" />
+      )}
       <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
           <span className="text-sm font-semibold tracking-[0.15em] select-none pointer-events-none" style={{ fontFamily: "'Cormorant SC', serif", fontSize: "15px", letterSpacing: "0.18em" }}>LUMENDUST</span>

@@ -570,7 +570,6 @@ export default function Home() {
     }
     prevTaskCountRef.current = newCount;
   }, [tasks]);
-  }, []);
 
   const [ratioOpen, setRatioOpen] = useState(false);
 

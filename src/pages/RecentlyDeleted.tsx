@@ -7,6 +7,7 @@ import Layout from "@/components/Layout";
 import { useGenerationStore } from "@/lib/generation-store";
 import { downloadOriginalImage } from "@/lib/api";
 import { resolveImageSrc } from "@/lib/format";
+import { triggerDownloadNotification } from "@/components/DownloadNotification";
 import { loadTrash, restoreFromTrash, permanentDelete, clearAllTrash, type TrashedTask } from "@/lib/trash-store";
 import ImageLightbox, { type LightboxImage } from "@/components/ImageLightbox";
 

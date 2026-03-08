@@ -128,11 +128,58 @@
 @layer base {
   * {
     @apply border-border;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.12) transparent;
+  }
+
+  *::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  *::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  *::-webkit-scrollbar-thumb {
+    background: hsl(var(--muted-foreground) / 0.12);
+    border-radius: 999px;
+  }
+  *::-webkit-scrollbar-thumb:hover {
+    background: hsl(var(--muted-foreground) / 0.25);
   }
 
   body {
     @apply font-sans antialiased bg-background text-foreground;
   }
+}
+
+/* Subtle animated background grain + floating gradient */
+@keyframes bg-drift {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(2%, -3%) scale(1.02); }
+  50% { transform: translate(-1%, 2%) scale(0.98); }
+  75% { transform: translate(-3%, -1%) scale(1.01); }
+}
+
+.dynamic-bg::before {
+  content: '';
+  position: fixed;
+  inset: -50%;
+  width: 200%;
+  height: 200%;
+  z-index: 0;
+  pointer-events: none;
+  opacity: 0.4;
+  background: radial-gradient(ellipse 600px 600px at 30% 20%, hsl(var(--primary) / 0.06), transparent 70%),
+              radial-gradient(ellipse 500px 500px at 70% 80%, hsl(var(--accent) / 0.08), transparent 70%),
+              radial-gradient(ellipse 400px 400px at 50% 50%, hsl(var(--muted-foreground) / 0.03), transparent 70%);
+  animation: bg-drift 20s ease-in-out infinite;
+}
+
+.dark .dynamic-bg::before {
+  opacity: 0.5;
+  background: radial-gradient(ellipse 600px 600px at 30% 20%, hsl(var(--primary) / 0.08), transparent 70%),
+              radial-gradient(ellipse 500px 500px at 70% 80%, hsl(210 60% 50% / 0.05), transparent 70%),
+              radial-gradient(ellipse 400px 400px at 50% 50%, hsl(var(--muted-foreground) / 0.04), transparent 70%);
 }
 
 @layer utilities {

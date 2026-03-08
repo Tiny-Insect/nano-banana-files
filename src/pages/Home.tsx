@@ -1225,7 +1225,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm font-medium">确认删除</p>
-                <p className="text-xs text-muted-foreground mt-0.5">删除后无法找回，包括关联的生成图片</p>
+                <p className="text-xs text-muted-foreground mt-0.5">该任务将移至「最近删除」，可随时找回</p>
               </div>
             </div>
             {deleteConfirmTask.prompt && (

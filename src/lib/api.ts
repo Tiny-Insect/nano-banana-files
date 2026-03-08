@@ -62,14 +62,18 @@ export async function callGenerateApi(body: Record<string, any>): Promise<any> {
 }
 
 /** Shared download helper — always downloads the original image from task.generatedImages */
-export async function downloadOriginalImage(url: string, index: number) {
+export async function downloadOriginalImage(url: string, index: number): Promise<string | undefined> {
   const s = loadSettings();
   const prefix = s.downloadPrefix || "LumenDust";
   try {
     const storage = getStorage();
     await storage.downloadImage(url, `${prefix}-${Date.now()}-${index}`);
+    // Return the download path for toast display
+    const downloadPath = s.downloadPath || (storage.getMode() === "web" ? "浏览器下载目录" : undefined);
+    return downloadPath || undefined;
   } catch {
     window.open(url, "_blank");
+    return undefined;
   }
 }
 

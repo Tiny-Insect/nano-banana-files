@@ -464,7 +464,7 @@ export default function Home() {
     setModel(newModel);
     const newRatios = newModel === "nanobanana-2" ? NANOBANANA2_RATIOS : NANOBANANA_PRO_RATIOS;
     if (!newRatios.includes(aspectRatio as any)) {
-      setAspectRatio("1:1");
+      setAspectRatio("9:16");
     }
   }, [aspectRatio, setModel, setAspectRatio]);
 

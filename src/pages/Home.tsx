@@ -95,7 +95,7 @@ const MODEL_LABELS: Record<string, string> = {
   "nanobanana-pro": "NanoBanana Pro",
 };
 
-function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelType) => void }) {
+function ModelToggle({ model, onChange, onColorProgress }: { model: string; onChange: (m: ModelType) => void; onColorProgress?: (p: number) => void }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const btn1Ref = useRef<HTMLButtonElement>(null);
   const btn2Ref = useRef<HTMLButtonElement>(null);
@@ -131,7 +131,9 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
       const t = Math.min(elapsed / duration, 1);
       // ease-in-out
       const ease = t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
-      setColorProgress(startColor + (endColor - startColor) * ease);
+      const val = startColor + (endColor - startColor) * ease;
+      setColorProgress(val);
+      onColorProgress?.(val);
       if (t < 1) animFrameRef.current = requestAnimationFrame(animateColor);
     };
     animFrameRef.current = requestAnimationFrame(animateColor);
@@ -164,7 +166,9 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
       const btnRect = activeRef.current.getBoundingClientRect();
       setSlider({ left: btnRect.left - containerRect.left, width: btnRect.width });
     }
-    setColorProgress(isPro ? 1 : 0);
+    const initVal = isPro ? 1 : 0;
+    setColorProgress(initVal);
+    onColorProgress?.(initVal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -515,6 +519,18 @@ export default function Home() {
   const prevTaskCountRef = useRef(tasks.length);
   const prevLastTaskRef = useRef<string | null>(null);
   const isPro = model === "nanobanana-pro";
+  const [colorProgress, setColorProgress] = useState(isPro ? 1 : 0);
+
+  // Smooth interpolated accent color based on model toggle animation
+  const blueH = 217, blueS = 91, blueL = 60;
+  const goldH = 40, goldS = 92, goldL = 55;
+  const accentH = blueH + (goldH - blueH) * colorProgress;
+  const accentS = blueS + (goldS - blueS) * colorProgress;
+  const accentL = blueL + (goldL - blueL) * colorProgress;
+  const smoothAccent = `hsl(${accentH}, ${accentS}%, ${accentL}%)`;
+  const smoothAccentBg = `hsl(${accentH}, ${accentS}%, ${accentL}%, 0.1)`;
+  const smoothAccentGradient = `linear-gradient(135deg, hsl(${accentH}, ${accentS}%, ${accentL}%), hsl(${accentH + 8}, ${accentS - 5}%, ${accentL - 4}%))`;
+
   const accentActiveClass = isPro ? "text-pro-accent bg-pro-accent/10" : "text-primary bg-primary/10";
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -1068,10 +1084,10 @@ export default function Home() {
                         onClick={handleGenerate}
                         disabled={!canGenerate}
                         size="icon"
-                        className="shrink-0 mt-1 rounded-lg w-11 h-11 transition-all duration-500"
-                        style={isPro ? {
-                          background: "linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.85))",
-                        } : undefined}
+                        className="shrink-0 mt-1 rounded-lg w-11 h-11 transition-all duration-500 text-white"
+                        style={{
+                          background: smoothAccentGradient,
+                        }}
                       >
                         <Send className="w-4 h-4" />
                       </Button>
@@ -1083,7 +1099,7 @@ export default function Home() {
                 </div>
 
                 <div className="border-t border-border/15 px-3 sm:px-5 py-2 sm:py-3 flex flex-wrap items-center gap-1.5 sm:gap-3 font-sans tracking-wide">
-                  <ModelToggle model={model} onChange={handleModelChange} />
+                  <ModelToggle model={model} onChange={handleModelChange} onColorProgress={setColorProgress} />
 
                   <span className="w-px h-6 bg-border/20" />
 
@@ -1166,10 +1182,9 @@ export default function Home() {
                   <button
                     onClick={() => setWebSearch(!webSearch)}
                     className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
-                      webSearch
-                        ? accentActiveClass
-                        : "text-muted-foreground hover:bg-muted/50"
+                      !webSearch ? "text-muted-foreground hover:bg-muted/50" : ""
                     }`}
+                    style={webSearch ? { color: smoothAccent, backgroundColor: smoothAccentBg } : undefined}
                     title="联网搜索"
                   >
                     <Globe className="w-3.5 h-3.5" />
@@ -1180,10 +1195,9 @@ export default function Home() {
                     <button
                       onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
                       className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
-                        thinkingLevel === "deep"
-                          ? accentActiveClass
-                          : "text-muted-foreground hover:bg-muted/50"
+                        thinkingLevel !== "deep" ? "text-muted-foreground hover:bg-muted/50" : ""
                       }`}
+                      style={thinkingLevel === "deep" ? { color: smoothAccent, backgroundColor: smoothAccentBg } : undefined}
                       title="深度思考"
                     >
                       <Brain className="w-3.5 h-3.5" />

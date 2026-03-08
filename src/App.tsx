@@ -44,6 +44,7 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <GenerationProvider>
         <TooltipProvider>
+          <StarField />
           <Toaster />
           <BrowserRouter>
             <Routes>

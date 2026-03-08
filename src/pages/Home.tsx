@@ -764,7 +764,7 @@ export default function Home() {
         )}
 
         <div
-          className="pb-4 transition-all duration-300 ease-in-out"
+          className="pb-4 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col justify-end"
         >
           <div 
             className={`rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm transition-all duration-300 ease-in-out ${inputCollapsed ? "cursor-pointer hover:border-border/80" : ""}`}

@@ -235,7 +235,7 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   );
 }
 
-function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, onReGenerate, onDelete }: {
+function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, onReGenerate, onDelete, onAddGeneratedAsRef }: {
   task: GenerationTask;
   onUsePrompt: (p: string) => void;
   onUseRefImage: (preview: string, base64: string, event?: any) => void;
@@ -243,6 +243,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   onReEdit: (task: GenerationTask) => void;
   onReGenerate: (task: GenerationTask) => void;
   onDelete: (task: GenerationTask) => void;
+  onAddGeneratedAsRef: (originalUrl: string, event?: React.MouseEvent) => void;
 }) {
   const downloadImage = async (url: string, index: number) => {
     const s = loadSettings();

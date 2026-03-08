@@ -1238,23 +1238,35 @@ export default function Home() {
                 生成失败的任务将被直接删除
               </p>
             ) : null}
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-4 text-xs"
-                onClick={() => setDeleteConfirmTask(null)}
-              >
-                取消
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="h-8 px-4 text-xs"
-                onClick={confirmDelete}
-              >
-                删除
-              </Button>
+            <div className="flex flex-col gap-2">
+              {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-full text-xs"
+                  onClick={confirmRemoveFromQueue}
+                >
+                  仅从队列中移除
+                </Button>
+              )}
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-4 text-xs"
+                  onClick={() => setDeleteConfirmTask(null)}
+                >
+                  取消
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 px-4 text-xs"
+                  onClick={confirmDeleteToTrash}
+                >
+                  移至最近删除
+                </Button>
+              </div>
             </div>
           </div>
         </div>

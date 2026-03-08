@@ -72,7 +72,7 @@ export interface StorageConfig {
   /** User-configured download path (desktop only) */
   downloadPath: string;
   /** Max cache size in MB */
-  maxCacheMB: number;
+  maxCacheMB: number | null;
   /** Download file prefix */
   downloadPrefix: string;
   /** Download file format */
@@ -82,15 +82,15 @@ export interface StorageConfig {
 export function getStorageConfig(): StorageConfig {
   try {
     const raw = localStorage.getItem("nanobanana_settings");
-    if (!raw) return { downloadPath: "", maxCacheMB: 500, downloadPrefix: "LumenDust", downloadFormat: "png" };
+    if (!raw) return { downloadPath: "", maxCacheMB: null, downloadPrefix: "LumenDust", downloadFormat: "png" };
     const s = JSON.parse(raw);
     return {
       downloadPath: s.downloadPath || "",
-      maxCacheMB: s.maxCacheMB || 500,
+      maxCacheMB: s.maxCacheMB ?? null,
       downloadPrefix: s.downloadPrefix || "LumenDust",
       downloadFormat: s.downloadFormat || "png",
     };
   } catch {
-    return { downloadPath: "", maxCacheMB: 500, downloadPrefix: "LumenDust", downloadFormat: "png" };
+    return { downloadPath: "", maxCacheMB: null, downloadPrefix: "LumenDust", downloadFormat: "png" };
   }
 }

@@ -874,13 +874,21 @@ export default function Home() {
     setDeleteConfirmTask(task);
   };
 
-  const confirmDelete = async () => {
+  const confirmDeleteToTrash = () => {
     const task = deleteConfirmTask;
     if (!task) return;
     setDeleteConfirmTask(null);
     const movedToTrash = moveToTrash(task);
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
     toast({ title: movedToTrash ? "已移至最近删除" : "已删除任务" });
+  };
+
+  const confirmRemoveFromQueue = () => {
+    const task = deleteConfirmTask;
+    if (!task) return;
+    setDeleteConfirmTask(null);
+    setTasks((prev) => prev.filter((t) => t.id !== task.id));
+    toast({ title: "已从队列中移除（数据保留在资产库）" });
   };
 
   return (
@@ -1204,8 +1212,8 @@ export default function Home() {
                 <AlertTriangle className="w-4 h-4 text-destructive" />
               </div>
               <div>
-                <p className="text-sm font-medium">确认删除</p>
-                <p className="text-xs text-muted-foreground mt-0.5">该任务将移至「最近删除」，可随时找回</p>
+                <p className="text-sm font-medium">删除任务</p>
+                <p className="text-xs text-muted-foreground mt-0.5">选择从队列移除（资产库仍保留）或移至最近删除</p>
               </div>
             </div>
             {/* Show task thumbnails instead of prompt */}
@@ -1230,23 +1238,35 @@ export default function Home() {
                 生成失败的任务将被直接删除
               </p>
             ) : null}
-            <div className="flex gap-2 justify-end">
-              <Button
-                variant="outline"
-                size="sm"
-                className="h-8 px-4 text-xs"
-                onClick={() => setDeleteConfirmTask(null)}
-              >
-                取消
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                className="h-8 px-4 text-xs"
-                onClick={confirmDelete}
-              >
-                删除
-              </Button>
+            <div className="flex flex-col gap-2">
+              {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages.length > 0 && (
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 w-full text-xs"
+                  onClick={confirmRemoveFromQueue}
+                >
+                  仅从队列中移除
+                </Button>
+              )}
+              <div className="flex gap-2 justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-8 px-4 text-xs"
+                  onClick={() => setDeleteConfirmTask(null)}
+                >
+                  取消
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="h-8 px-4 text-xs"
+                  onClick={confirmDeleteToTrash}
+                >
+                  移至最近删除
+                </Button>
+              </div>
             </div>
           </div>
         </div>

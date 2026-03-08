@@ -290,10 +290,60 @@ serve(async (req) => {
     const resultImages = extractImagesFromResponse(data);
     console.log("Extracted images:", resultImages.length);
 
+    // Upload images to Storage to avoid memory issues with large base64 responses
+    if (resultImages.length > 0) {
+      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+      const storageClient = createClient(supabaseUrl, supabaseKey);
+      
+      const imageUrls: string[] = [];
+      for (let i = 0; i < resultImages.length; i++) {
+        const img = resultImages[i];
+        try {
+          // Extract raw binary from base64 data URL
+          const match = img.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
+          if (!match) {
+            // Already a URL, keep as-is
+            imageUrls.push(img);
+            continue;
+          }
+          const ext = match[1] === "jpeg" ? "jpg" : match[1];
+          const raw = match[2];
+          const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
+          
+          const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${i}.${ext}`;
+          const { data: uploadData, error: uploadError } = await storageClient.storage
+            .from('generated-images')
+            .upload(fileName, bytes, { contentType: `image/${match[1]}`, upsert: false });
+          
+          if (uploadError) {
+            console.error("Storage upload error:", uploadError.message);
+            // Fall back to data URL if upload fails
+            imageUrls.push(img);
+          } else {
+            const { data: urlData } = storageClient.storage
+              .from('generated-images')
+              .getPublicUrl(uploadData.path);
+            imageUrls.push(urlData.publicUrl);
+          }
+          // Free memory immediately
+          resultImages[i] = "";
+        } catch (e) {
+          console.error("Image upload error:", e);
+          imageUrls.push(img);
+        }
+      }
+
+      return new Response(
+        JSON.stringify({ images: imageUrls }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     return new Response(
       JSON.stringify({
-        images: resultImages,
-        raw: resultImages.length === 0 ? data : undefined,
+        images: [],
+        raw: data,
       }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );

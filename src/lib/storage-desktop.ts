@@ -96,13 +96,11 @@ export class DesktopStorage implements StorageAdapter {
     // Return local-file:// URLs for secure local display via custom protocol
     // Use standard URL format: local-file://serve/<absolute-path>
     const normalizedOriginal = originalPath.replace(/\\/g, "/");
-    const normalizedThumb = thumbPath.replace(/\\/g, "/");
     const originalUrl = `local-file://serve/${normalizedOriginal}`;
-    const thumbnailUrl = `local-file://serve/${normalizedThumb}`;
 
-    console.log("[DesktopStorage] Saved image:", { id, originalUrl, thumbnailUrl });
+    console.log("[DesktopStorage] Saved image:", { id, originalUrl });
 
-    return { id, originalUrl, thumbnailUrl, mimeType, size: blob.size };
+    return { id, originalUrl, thumbnailUrl: originalUrl, mimeType, size: blob.size };
   }
 
   async saveReferenceImage(file: File): Promise<string> {

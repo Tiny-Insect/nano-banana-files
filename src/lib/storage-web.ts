@@ -94,28 +94,8 @@ export class WebStorage implements StorageAdapter {
 
     const originalUrl = urlData.publicUrl;
 
-    // Create and upload thumbnail
-    let thumbnailUrl = originalUrl; // fallback
-    try {
-      const thumbBlob = await createThumbnail(blob, 280);
-      const { data: thumbUpload, error: thumbErr } = await supabase.storage
-        .from("generated-images")
-        .upload(`thumb_${id}.jpg`, thumbBlob, { contentType: "image/jpeg" });
-
-      if (!thumbErr && thumbUpload) {
-        const { data: thumbUrl } = supabase.storage
-          .from("generated-images")
-          .getPublicUrl(thumbUpload.path);
-        thumbnailUrl = thumbUrl.publicUrl;
-      }
-
-      // Also cache thumbnail locally in IndexedDB
-      await cacheThumb(id, thumbBlob);
-    } catch {
-      // Thumbnail creation failed, use original
-    }
-
-    return { id, originalUrl, thumbnailUrl, mimeType, size: blob.size };
+    // Use original for both display and thumbnail (no separate thumbnail)
+    return { id, originalUrl, thumbnailUrl: originalUrl, mimeType, size: blob.size };
   }
 
   async saveReferenceImage(file: File): Promise<string> {

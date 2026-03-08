@@ -6,9 +6,18 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-custom-api-url, x-custom-api-key",
 };
 
-const MODEL_MAP: Record<string, string> = {
+const LOVABLE_AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
+
+// Model mapping for custom API endpoints (non-gateway)
+const MODEL_MAP_CUSTOM: Record<string, string> = {
   "nanobanana-2": "gemini-3.1-flash-image-preview",
   "nanobanana-pro": "gemini-3-pro-image-preview",
+};
+
+// Model mapping for Lovable AI Gateway
+const MODEL_MAP_GATEWAY: Record<string, string> = {
+  "nanobanana-2": "google/gemini-2.5-flash-image",
+  "nanobanana-pro": "google/gemini-3-pro-image-preview",
 };
 
 function extractImagesFromResponse(data: any): string[] {
@@ -111,42 +120,70 @@ serve(async (req) => {
     const customApiUrl = req.headers.get("x-custom-api-url");
     const customApiKey = req.headers.get("x-custom-api-key");
 
-    let rawUrl = Deno.env.get("NANOBANANA_API_URL") || "";
-    if (customApiUrl && customApiUrl.trim()) {
-      try {
-        const parsed = new URL(customApiUrl.trim());
-        if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+    // Determine if using custom API or Lovable AI Gateway
+    const useCustom = !!(customApiUrl?.trim() || Deno.env.get("NANOBANANA_API_URL")?.trim());
+    let chatUrl: string;
+    let apiKey: string;
+    let apiModel: string;
+
+    if (useCustom) {
+      // Custom API mode
+      let rawUrl = Deno.env.get("NANOBANANA_API_URL") || "";
+      if (customApiUrl && customApiUrl.trim()) {
+        try {
+          const parsed = new URL(customApiUrl.trim());
+          if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+            return new Response(
+              JSON.stringify({ error: "API URL 必须以 http:// 或 https:// 开头" }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
+          rawUrl = customApiUrl.trim();
+        } catch {
           return new Response(
-            JSON.stringify({ error: "API URL 必须以 http:// 或 https:// 开头" }),
+            JSON.stringify({ error: "自定义 API URL 格式无效" }),
             { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
           );
         }
-        rawUrl = customApiUrl.trim();
-      } catch {
+      }
+
+      const baseUrl = rawUrl
+        .replace(/\/v1beta\/openai\/chat\/completions\/?$/, "")
+        .replace(/\/v1\/chat\/completions\/?$/, "")
+        .replace(/\/v1\/images\/generations\/?$/, "")
+        .replace(/\/v1\/?$/, "")
+        .replace(/\/+$/, "");
+
+      apiKey = (customApiKey && customApiKey.trim()) || Deno.env.get("NANOBANANA_API_KEY") || "";
+
+      if (!baseUrl || !apiKey) {
         return new Response(
-          JSON.stringify({ error: "自定义 API URL 格式无效" }),
+          JSON.stringify({ error: "请先在右上角「设置」中填写 API URL 和 API Key" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      // Detect Google AI Studio and use correct path
+      if (baseUrl.includes("generativelanguage.googleapis.com")) {
+        chatUrl = `${baseUrl}/v1beta/openai/chat/completions`;
+      } else {
+        chatUrl = `${baseUrl}/v1/chat/completions`;
+      }
+
+      apiModel = MODEL_MAP_CUSTOM[model] || model;
+    } else {
+      // Lovable AI Gateway mode (default)
+      const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+      if (!lovableKey) {
+        return new Response(
+          JSON.stringify({ error: "LOVABLE_API_KEY 未配置，请启用 Lovable Cloud" }),
+          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      chatUrl = LOVABLE_AI_GATEWAY;
+      apiKey = lovableKey;
+      apiModel = MODEL_MAP_GATEWAY[model] || model;
     }
-
-    const baseUrl = rawUrl
-      .replace(/\/v1\/chat\/completions\/?$/, "")
-      .replace(/\/v1\/images\/generations\/?$/, "")
-      .replace(/\/v1\/?$/, "")
-      .replace(/\/+$/, "");
-
-    const apiKey =
-      (customApiKey && customApiKey.trim()) || Deno.env.get("NANOBANANA_API_KEY") || "";
-
-    if (!baseUrl || !apiKey) {
-      return new Response(
-        JSON.stringify({ error: "请先在右上角「设置」中填写 API URL 和 API Key" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    const apiModel = MODEL_MAP[model] || model;
 
     // Build content parts
     const contentParts: any[] = [];
@@ -195,7 +232,6 @@ serve(async (req) => {
     if (web_search) requestBody.web_search = true;
     if (thinking_level) requestBody.thinking_level = thinking_level;
 
-    const chatUrl = `${baseUrl}/v1/chat/completions`;
     console.log("Request:", chatUrl, "model:", apiModel);
 
     const response = await fetch(chatUrl, {
@@ -211,6 +247,7 @@ serve(async (req) => {
       const errorText = await response.text();
       console.error("API error:", response.status, errorText.substring(0, 500));
       const friendlyMessages: Record<number, string> = {
+        402: "额度不足，请充值后再试",
         429: "请求过于频繁，请稍等几秒后再试",
         502: "API 服务暂时不可用，请稍后再试",
         503: "API 服务暂时不可用，请稍后再试",

@@ -7,6 +7,7 @@ import { queryClient } from "@/lib/queryClient";
 import { GenerationProvider } from "@/lib/generation-store";
 import Home from "@/pages/Home";
 import Assets from "@/pages/Assets";
+import RecentlyDeleted from "@/pages/RecentlyDeleted";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 
@@ -50,6 +51,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/assets" element={<Assets />} />
+              <Route path="/trash" element={<RecentlyDeleted />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

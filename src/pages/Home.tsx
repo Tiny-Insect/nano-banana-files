@@ -8,6 +8,7 @@ import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/g
 import { getStorage } from "@/lib/storage-factory";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
 import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain, CornerDownLeft } from "lucide-react";
+import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
 
@@ -903,8 +904,9 @@ export default function Home() {
     const task = deleteConfirmTask;
     if (!task) return;
     setDeleteConfirmTask(null);
+    const movedToTrash = moveToTrash(task);
     setTasks((prev) => prev.filter((t) => t.id !== task.id));
-    toast({ title: "已删除任务" });
+    toast({ title: movedToTrash ? "已移至最近删除" : "已删除任务" });
   };
 
   return (
@@ -1223,7 +1225,7 @@ export default function Home() {
               </div>
               <div>
                 <p className="text-sm font-medium">确认删除</p>
-                <p className="text-xs text-muted-foreground mt-0.5">删除后无法找回，包括关联的生成图片</p>
+                <p className="text-xs text-muted-foreground mt-0.5">该任务将移至「最近删除」，可随时找回</p>
               </div>
             </div>
             {deleteConfirmTask.prompt && (

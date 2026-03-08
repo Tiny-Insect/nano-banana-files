@@ -308,7 +308,13 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
         </div>
       ) : (
         <div className="flex flex-wrap gap-3">
-          {task.generatedImages.map((img, i) => {
+          {(() => {
+            const ratioWidths: Record<string, number> = {
+              "1:1": 180, "4:3": 200, "3:2": 210, "16:9": 260, "21:9": 320,
+              "3:4": 150, "2:3": 140, "9:16": 120,
+            };
+            const adaptiveWidth = ratioWidths[task.aspectRatio] || 180;
+            return task.generatedImages.map((img, i) => {
             const src = img.startsWith("data:") || img.startsWith("http") ? img : `data:image/png;base64,${img}`;
             const thumbSrc = task.thumbnails?.[i] || src;
             const displaySrc = thumbSrc.startsWith("data:") || thumbSrc.startsWith("http") ? thumbSrc : `data:image/png;base64,${thumbSrc}`;
@@ -316,7 +322,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
               <div
                 key={i}
                 className="group/img relative rounded-lg overflow-hidden bg-card/50 border border-border/20 hover:border-primary/30 transition-all duration-300"
-                style={{ maxWidth: 180, boxShadow: "0 0 0 0 transparent" }}
+                style={{ maxWidth: adaptiveWidth, boxShadow: "0 0 0 0 transparent" }}
                 onMouseEnter={(e) => { e.currentTarget.style.boxShadow = "0 0 16px 2px hsl(var(--primary) / 0.15), 0 0 6px 0 hsl(var(--primary) / 0.1)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 0 0 transparent"; }}
               >
@@ -357,7 +363,8 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                 </div>
               </div>
             );
-          })}
+            });
+          })()}
         </div>
       )}
 

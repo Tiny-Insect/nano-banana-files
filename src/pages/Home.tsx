@@ -1084,10 +1084,10 @@ export default function Home() {
                         onClick={handleGenerate}
                         disabled={!canGenerate}
                         size="icon"
-                        className="shrink-0 mt-1 rounded-lg w-11 h-11 transition-all duration-500"
-                        style={isPro ? {
-                          background: "linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.85))",
-                        } : undefined}
+                        className="shrink-0 mt-1 rounded-lg w-11 h-11 transition-all duration-500 text-white"
+                        style={{
+                          background: smoothAccentGradient,
+                        }}
                       >
                         <Send className="w-4 h-4" />
                       </Button>

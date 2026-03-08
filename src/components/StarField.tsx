@@ -1,18 +1,21 @@
 import { useEffect, useRef } from "react";
 
-interface Star {
+interface Particle {
   x: number;
   y: number;
   r: number;
   opacity: number;
-  speed: number;
+  vx: number;
+  vy: number;
   phase: number;
+  drift: number;
 }
 
 export default function StarField() {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const starsRef = useRef<Star[]>([]);
+  const particlesRef = useRef<Particle[]>([]);
   const rafRef = useRef<number>(0);
+  const mouseRef = useRef({ x: -1, y: -1 });
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -21,46 +24,83 @@ export default function StarField() {
     if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
+    let w = 0, h = 0;
 
     const resize = () => {
-      canvas.width = window.innerWidth * dpr;
-      canvas.height = window.innerHeight * dpr;
-      canvas.style.width = window.innerWidth + "px";
-      canvas.style.height = window.innerHeight + "px";
-      ctx.scale(dpr, dpr);
-      initStars();
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w * dpr;
+      canvas.height = h * dpr;
+      canvas.style.width = w + "px";
+      canvas.style.height = h + "px";
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      initParticles();
     };
 
-    const initStars = () => {
-      const w = window.innerWidth;
-      const h = window.innerHeight;
-      const count = Math.floor((w * h) / 4000);
-      starsRef.current = Array.from({ length: count }, () => ({
+    const initParticles = () => {
+      const count = Math.floor((w * h) / 5000);
+      particlesRef.current = Array.from({ length: count }, () => ({
         x: Math.random() * w,
         y: Math.random() * h,
-        r: Math.random() * 1.5 + 0.4,
-        opacity: Math.random() * 0.6 + 0.15,
-        speed: Math.random() * 0.4 + 0.1,
+        r: Math.random() * 1.8 + 0.5,
+        opacity: Math.random() * 0.5 + 0.15,
+        vx: (Math.random() - 0.5) * 0.3,
+        vy: (Math.random() - 0.5) * 0.15 - 0.1, // slight upward drift
         phase: Math.random() * Math.PI * 2,
+        drift: Math.random() * 0.8 + 0.3,
       }));
+    };
+
+    const onMouseMove = (e: MouseEvent) => {
+      mouseRef.current = { x: e.clientX, y: e.clientY };
     };
 
     let t = 0;
     const draw = () => {
-      t += 0.006;
-      const w = window.innerWidth;
-      const h = window.innerHeight;
+      t += 0.004;
       ctx.clearRect(0, 0, w, h);
 
       const isDark = document.documentElement.classList.contains("dark");
-      const baseColor = isDark ? "255,255,255" : "80,80,80";
 
-      for (const s of starsRef.current) {
-        const twinkle = Math.sin(t * s.speed * 5 + s.phase) * 0.35 + 0.65;
-        const a = s.opacity * twinkle * (isDark ? 0.7 : 0.25);
+      for (const p of particlesRef.current) {
+        // Organic floating motion
+        p.x += p.vx + Math.sin(t * p.drift + p.phase) * 0.25;
+        p.y += p.vy + Math.cos(t * p.drift * 0.7 + p.phase) * 0.15;
+
+        // Subtle mouse repulsion
+        const mx = mouseRef.current.x;
+        const my = mouseRef.current.y;
+        if (mx >= 0) {
+          const dx = p.x - mx;
+          const dy = p.y - my;
+          const dist = Math.sqrt(dx * dx + dy * dy);
+          if (dist < 120) {
+            const force = (120 - dist) / 120 * 0.4;
+            p.x += (dx / dist) * force;
+            p.y += (dy / dist) * force;
+          }
+        }
+
+        // Wrap around edges
+        if (p.x < -10) p.x = w + 10;
+        if (p.x > w + 10) p.x = -10;
+        if (p.y < -10) p.y = h + 10;
+        if (p.y > h + 10) p.y = -10;
+
+        // Twinkle
+        const twinkle = Math.sin(t * 3 * p.drift + p.phase) * 0.25 + 0.75;
+        const a = p.opacity * twinkle;
+
+        if (isDark) {
+          // Dark mode: soft warm white particles
+          ctx.fillStyle = `rgba(220,225,235,${a * 0.6})`;
+        } else {
+          // Light mode: warm gray-blue dust, visible on off-white
+          ctx.fillStyle = `rgba(120,130,150,${a * 0.35})`;
+        }
+
         ctx.beginPath();
-        ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(${baseColor},${a})`;
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
         ctx.fill();
       }
 
@@ -70,9 +110,11 @@ export default function StarField() {
     resize();
     draw();
     window.addEventListener("resize", resize);
+    window.addEventListener("mousemove", onMouseMove);
 
     return () => {
       window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMouseMove);
       cancelAnimationFrame(rafRef.current);
     };
   }, []);

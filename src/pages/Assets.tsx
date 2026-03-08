@@ -308,10 +308,23 @@ function AssetLightbox({ image, onClose, onUsePrompt, onReEdit, onReGenerate, on
                 <p className="text-xs text-muted-foreground mt-0.5">该任务将移至「最近删除」，可随时找回</p>
               </div>
             </div>
-            {image.prompt && (
-              <p className="text-xs text-muted-foreground/70 bg-muted/30 rounded-md px-3 py-2 mb-4 truncate">
-                "{image.prompt}"
-              </p>
+            {/* Show task thumbnails */}
+            {image.task.generatedImages && image.task.generatedImages.length > 0 && (
+              <div className="flex flex-wrap gap-1.5 mb-4 bg-muted/20 rounded-lg p-2.5">
+                {image.task.generatedImages.map((img, i) => {
+                  const thumb = image.task.thumbnails?.[i] || img;
+                  const src = thumb.startsWith("data:") || thumb.startsWith("http") ? thumb : `data:image/png;base64,${thumb}`;
+                  return (
+                    <img
+                      key={i}
+                      src={src}
+                      alt=""
+                      className="rounded-md object-cover"
+                      style={{ width: image.task.generatedImages.length === 1 ? "100%" : "calc(50% - 3px)", maxHeight: 120 }}
+                    />
+                  );
+                })}
+              </div>
             )}
             <div className="flex gap-2 justify-end">
               <Button

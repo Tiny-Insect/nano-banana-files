@@ -72,7 +72,7 @@ export interface StorageConfig {
   /** User-configured download path (desktop only) */
   downloadPath: string;
   /** Max cache size in MB */
-  maxCacheMB: number;
+  maxCacheMB: number | null;
   /** Download file prefix */
   downloadPrefix: string;
   /** Download file format */

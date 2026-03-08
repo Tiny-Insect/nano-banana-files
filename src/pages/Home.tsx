@@ -765,16 +765,55 @@ export default function Home() {
 
         <div
           className="pb-4 transition-all duration-300 ease-in-out"
-          onClick={() => { if (inputCollapsed) { setInputCollapsed(false); } }}
         >
-          <div className={`rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm transition-all duration-300 ease-in-out ${inputCollapsed ? "cursor-pointer hover:border-border/80" : ""}`}>
+          <div 
+            className={`rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm transition-all duration-300 ease-in-out ${inputCollapsed ? "cursor-pointer hover:border-border/80" : ""}`}
+            onClick={() => { if (inputCollapsed) { setInputCollapsed(false); } }}
+          >
             {inputCollapsed ? (
-              <div className="flex items-center gap-2 px-3 py-2.5">
-                <Plus className="w-3.5 h-3.5 text-muted-foreground/40 shrink-0" />
-                <span className="text-xs text-muted-foreground/40 truncate flex-1">
-                  {prompt.trim() || "输入提示词..."}
-                </span>
-                <Send className="w-3.5 h-3.5 text-muted-foreground/30 shrink-0" />
+              <div className="flex items-center gap-2 px-3 py-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handleImageUpload}
+                />
+                <button
+                  onClick={(e) => { e.stopPropagation(); fileInputRef.current?.click(); }}
+                  className="w-8 h-8 rounded-md border border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground/30 shrink-0 transition-colors hover:border-muted-foreground/40"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                </button>
+                {referenceImagePreviews.length > 0 && (
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    {referenceImagePreviews.slice(0, 3).map((preview, i) => (
+                      <div key={i} className="w-7 h-7 rounded overflow-hidden border border-border/30">
+                        <img src={preview} alt="" className="w-full h-full object-cover" />
+                      </div>
+                    ))}
+                    {referenceImagePreviews.length > 3 && (
+                      <span className="text-[10px] text-muted-foreground/50 ml-1">+{referenceImagePreviews.length - 3}</span>
+                    )}
+                  </div>
+                )}
+                <input
+                  type="text"
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && canGenerate) { e.preventDefault(); handleGenerate(); } }}
+                  placeholder="输入提示词..."
+                  className="flex-1 bg-transparent border-0 outline-none text-xs text-foreground placeholder:text-muted-foreground/30 min-w-0"
+                  onClick={(e) => e.stopPropagation()}
+                />
+                <Button
+                  onClick={(e) => { e.stopPropagation(); handleGenerate(); }}
+                  disabled={!canGenerate}
+                  size="icon"
+                  className="shrink-0 w-7 h-7 rounded-md"
+                >
+                  <Send className="w-3 h-3" />
+                </Button>
               </div>
             ) : (
               <>

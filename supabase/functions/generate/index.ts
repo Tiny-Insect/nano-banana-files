@@ -12,93 +12,9 @@ const MODEL_MAP: Record<string, string> = {
   "nanobanana-pro": "gemini-3-pro-image-preview",
 };
 
-function extractImagesFromResponse(data: any): string[] {
-  const images: string[] = [];
-
-  // Official Gemini native format
-  if (data.candidates && Array.isArray(data.candidates)) {
-    for (const candidate of data.candidates) {
-      if (candidate.content && Array.isArray(candidate.content.parts)) {
-        for (const part of candidate.content.parts) {
-          if (part.inlineData && part.inlineData.data) {
-            images.push(
-              `data:${part.inlineData.mimeType || "image/png"};base64,${part.inlineData.data}`
-            );
-          } else if (part.inline_data && part.inline_data.data) {
-            images.push(
-              `data:${part.inline_data.mime_type || "image/png"};base64,${part.inline_data.data}`
-            );
-          }
-        }
-      }
-    }
-  }
-
-  // OpenAI-compatible format (for third-party proxies)
-  if (data.choices && Array.isArray(data.choices)) {
-    for (const choice of data.choices) {
-      const msg = choice.message;
-      if (!msg) continue;
-
-      // Handle message.images array (Google OpenAI-compatible format)
-      if (msg.images && Array.isArray(msg.images)) {
-        for (const imgObj of msg.images) {
-          if (imgObj.image_url?.url) images.push(imgObj.image_url.url);
-          else if (imgObj.url) images.push(imgObj.url);
-        }
-      }
-
-      const content = msg.content;
-      if (!content) continue;
-
-      if (typeof content === "string") {
-        const base64Match = content.match(
-          /data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g
-        );
-        if (base64Match) images.push(...base64Match);
-        continue;
-      }
-
-      if (Array.isArray(content)) {
-        for (const part of content) {
-          if (!part) continue;
-          if (part.type === "image_url" && part.image_url?.url) {
-            images.push(part.image_url.url);
-          } else if (part.type === "image_url" && typeof part.image_url === "string") {
-            images.push(part.image_url);
-          } else if (part.type === "image" && part.image?.url) {
-            images.push(part.image.url);
-          } else if (part.type === "image" && part.url) {
-            images.push(part.url);
-          } else if (part.type === "image" && part.data) {
-            images.push(`data:image/png;base64,${part.data}`);
-          } else if (part.type === "image" && part.source?.data) {
-            images.push(
-              `data:image/${part.source.media_type || "png"};base64,${part.source.data}`
-            );
-          } else if (part.b64_json) {
-            images.push(`data:image/png;base64,${part.b64_json}`);
-          } else if (part.type === "text" && typeof part.text === "string") {
-            const b64 = part.text.match(
-              /data:image\/[a-zA-Z]+;base64,[A-Za-z0-9+/=]+/g
-            );
-            if (b64) images.push(...b64);
-          }
-        }
-      }
-    }
-  }
-
-  // images/generations format
-  if (data.data && Array.isArray(data.data)) {
-    for (const d of data.data) {
-      if (d.url) images.push(d.url);
-      if (d.b64_json) images.push(`data:image/png;base64,${d.b64_json}`);
-    }
-  }
-
-  return images;
-}
+// Note: extractImagesFromResponse was removed to save memory.
+// Images are now extracted directly from raw response text via regex
+// and uploaded to Storage to avoid OOM with large 4K base64 images.
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -277,75 +193,72 @@ serve(async (req) => {
       });
     }
 
-    const data = await response.json();
-    console.log("API response received, extracting images...");
+    // CRITICAL: Do NOT use response.json() - it loads entire base64 image into memory
+    // and causes OOM for large (4K) images. Instead, use text and process in-place.
+    const responseText = await response.text();
+    console.log("API response received, length:", responseText.length);
 
-    // Safety filter check (Google native)
-    if (data.candidates && data.candidates[0]?.finishReason === "SAFETY") {
+    // Check safety filter
+    if (responseText.includes('"finishReason":"SAFETY"') || responseText.includes('"finishReason": "SAFETY"')) {
       return new Response(
         JSON.stringify({ error: "请求被安全过滤器拦截，请尝试修改提示词" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    const resultImages = extractImagesFromResponse(data);
-    console.log("Extracted images:", resultImages.length);
+    // Extract base64 image data directly from raw text using regex
+    // For Gemini native: "data": "BASE64..." in inlineData
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const storageClient = createClient(supabaseUrl, supabaseKey);
 
-    // Upload images to Storage to avoid memory issues with large base64 responses
-    if (resultImages.length > 0) {
-      const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-      const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-      const storageClient = createClient(supabaseUrl, supabaseKey);
+    const imageUrls: string[] = [];
+    
+    // Match inlineData blocks: {"mimeType":"image/png","data":"BASE64"}
+    // Process one at a time to minimize memory
+    const dataRegex = /"data"\s*:\s*"([A-Za-z0-9+/=]{1000,})"/g;
+    const mimeRegex = /"mimeType"\s*:\s*"(image\/[a-zA-Z]+)"/;
+    
+    let match;
+    let imgIndex = 0;
+    while ((match = dataRegex.exec(responseText)) !== null) {
+      const base64Data = match[1];
+      // Look backwards for mimeType
+      const contextStart = Math.max(0, match.index - 200);
+      const context = responseText.substring(contextStart, match.index);
+      const mimeMatch = context.match(mimeRegex);
+      const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
+      const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
       
-      const imageUrls: string[] = [];
-      for (let i = 0; i < resultImages.length; i++) {
-        const img = resultImages[i];
-        try {
-          // Extract raw binary from base64 data URL
-          const match = img.match(/^data:image\/([a-zA-Z]+);base64,(.+)$/);
-          if (!match) {
-            // Already a URL, keep as-is
-            imageUrls.push(img);
-            continue;
-          }
-          const ext = match[1] === "jpeg" ? "jpg" : match[1];
-          const raw = match[2];
-          const bytes = Uint8Array.from(atob(raw), c => c.charCodeAt(0));
-          
-          const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${i}.${ext}`;
-          const { data: uploadData, error: uploadError } = await storageClient.storage
+      try {
+        // Decode base64 to bytes
+        const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+        console.log(`Image ${imgIndex}: ${bytes.length} bytes, ${mimeType}`);
+        
+        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${imgIndex}.${ext}`;
+        const { data: uploadData, error: uploadError } = await storageClient.storage
+          .from('generated-images')
+          .upload(fileName, bytes, { contentType: mimeType, upsert: false });
+        
+        if (uploadError) {
+          console.error("Storage upload error:", uploadError.message);
+        } else {
+          const { data: urlData } = storageClient.storage
             .from('generated-images')
-            .upload(fileName, bytes, { contentType: `image/${match[1]}`, upsert: false });
-          
-          if (uploadError) {
-            console.error("Storage upload error:", uploadError.message);
-            // Fall back to data URL if upload fails
-            imageUrls.push(img);
-          } else {
-            const { data: urlData } = storageClient.storage
-              .from('generated-images')
-              .getPublicUrl(uploadData.path);
-            imageUrls.push(urlData.publicUrl);
-          }
-          // Free memory immediately
-          resultImages[i] = "";
-        } catch (e) {
-          console.error("Image upload error:", e);
-          imageUrls.push(img);
+            .getPublicUrl(uploadData.path);
+          imageUrls.push(urlData.publicUrl);
+          console.log(`Uploaded image ${imgIndex} to Storage`);
         }
+      } catch (e) {
+        console.error("Image processing error:", e);
       }
-
-      return new Response(
-        JSON.stringify({ images: imageUrls }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      imgIndex++;
     }
 
+    console.log("Total images uploaded:", imageUrls.length);
+
     return new Response(
-      JSON.stringify({
-        images: [],
-        raw: data,
-      }),
+      JSON.stringify({ images: imageUrls }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error: any) {

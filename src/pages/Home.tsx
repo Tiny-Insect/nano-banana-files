@@ -919,14 +919,14 @@ export default function Home() {
                   {model !== "nanobanana-pro" && (
                     <button
                       onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
-                      className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
                         thinkingLevel === "deep"
                           ? "text-primary bg-primary/10"
                           : "text-muted-foreground hover:bg-muted/50"
                       }`}
                       title="深度思考"
                     >
-                      <Brain className="w-3.5 h-3.5" />
+                      <Brain className="w-4 h-4" />
                       思考
                     </button>
                   )}

@@ -13,6 +13,7 @@ export interface AppSettings {
   downloadPrefix: string;
   downloadFormat: string;
   downloadPath: string;
+  cachePath: string;
   maxCacheMB: number | null;
 }
 
@@ -22,6 +23,7 @@ const defaultSettings: AppSettings = {
   downloadPrefix: "LumenDust",
   downloadFormat: "png",
   downloadPath: "",
+  cachePath: "",
   maxCacheMB: null,
 };
 

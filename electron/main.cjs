@@ -1,5 +1,6 @@
-const { app, BrowserWindow, shell, ipcMain } = require("electron");
+const { app, BrowserWindow, shell, ipcMain, dialog } = require("electron");
 const path = require("path");
+const fs = require("fs");
 
 // Prevent multiple instances
 const gotLock = app.requestSingleInstanceLock();

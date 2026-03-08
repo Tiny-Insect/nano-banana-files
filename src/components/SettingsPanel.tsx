@@ -184,15 +184,60 @@ export default function SettingsPanel() {
             </Popover>
           </div>
           <div className="space-y-2">
-            <div>
+          <div>
               <label className="text-xs text-muted-foreground mb-1 block">下载保存路径</label>
-              <input
-                type="text"
-                value={settings.downloadPath || ""}
-                onChange={(e) => setSettings({ ...settings, downloadPath: e.target.value })}
-                placeholder="留空则由浏览器/系统决定"
-                className="w-full h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 font-mono"
-              />
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  value={settings.downloadPath || ""}
+                  onChange={(e) => setSettings({ ...settings, downloadPath: e.target.value })}
+                  placeholder="留空则由浏览器/系统决定"
+                  className="flex-1 h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 font-mono"
+                />
+                {(window as any).electronAPI && (
+                  <button
+                    onClick={async () => {
+                      const dir = await (window as any).electronAPI.selectFolder("选择下载保存路径");
+                      if (dir) setSettings({ ...settings, downloadPath: dir });
+                    }}
+                    className="h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-muted-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+                  >
+                    浏览…
+                  </button>
+                )}
+              </div>
+            </div>
+            <div>
+              <label className="text-xs text-muted-foreground mb-1 block">缓存路径</label>
+              <div className="flex gap-1">
+                <input
+                  type="text"
+                  value={settings.cachePath || ""}
+                  onChange={(e) => setSettings({ ...settings, cachePath: e.target.value })}
+                  placeholder={
+                    (window as any).electronAPI
+                      ? "留空则使用默认 AppData 目录"
+                      : "桌面版可配置，网页版使用浏览器缓存"
+                  }
+                  className="flex-1 h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-foreground placeholder:text-muted-foreground/40 outline-none focus:border-primary/50 font-mono"
+                />
+                {(window as any).electronAPI && (
+                  <button
+                    onClick={async () => {
+                      const dir = await (window as any).electronAPI.selectFolder("选择缓存路径");
+                      if (dir) setSettings({ ...settings, cachePath: dir });
+                    }}
+                    className="h-8 px-2 rounded-md border border-border/50 bg-muted/30 text-xs text-muted-foreground hover:bg-muted/50 transition-colors whitespace-nowrap"
+                  >
+                    浏览…
+                  </button>
+                )}
+              </div>
+              <p className="text-[10px] text-muted-foreground/40 mt-0.5">
+                {(window as any).electronAPI
+                  ? "生成的图片原图和缩略图将缓存到此路径"
+                  : "仅桌面版有效，网页版图片存储在云端"}
+              </p>
             </div>
             <div>
               <label className="text-xs text-muted-foreground mb-1 block">最大缓存 (MB)</label>

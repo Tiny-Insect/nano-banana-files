@@ -193,74 +193,18 @@ serve(async (req) => {
       });
     }
 
-    // CRITICAL: Do NOT use response.json() - it loads entire base64 image into memory
-    // and causes OOM for large (4K) images. Instead, use text and process in-place.
-    const responseText = await response.text();
-    console.log("API response received, length:", responseText.length);
-
-    // Check safety filter
-    if (responseText.includes('"finishReason":"SAFETY"') || responseText.includes('"finishReason": "SAFETY"')) {
-      return new Response(
-        JSON.stringify({ error: "请求被安全过滤器拦截，请尝试修改提示词" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
-
-    // Extract base64 image data directly from raw text using regex
-    // For Gemini native: "data": "BASE64..." in inlineData
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const storageClient = createClient(supabaseUrl, supabaseKey);
-
-    const imageUrls: string[] = [];
+    // CRITICAL: Stream the response directly to the client.
+    // 4K images produce ~59MB responses - impossible to buffer in 150MB Edge Function.
+    // The frontend will handle base64 extraction and Storage upload.
+    console.log("Streaming response to client...");
     
-    // Match inlineData blocks: {"mimeType":"image/png","data":"BASE64"}
-    // Process one at a time to minimize memory
-    const dataRegex = /"data"\s*:\s*"([A-Za-z0-9+/=]{1000,})"/g;
-    const mimeRegex = /"mimeType"\s*:\s*"(image\/[a-zA-Z]+)"/;
-    
-    let match;
-    let imgIndex = 0;
-    while ((match = dataRegex.exec(responseText)) !== null) {
-      const base64Data = match[1];
-      // Look backwards for mimeType
-      const contextStart = Math.max(0, match.index - 200);
-      const context = responseText.substring(contextStart, match.index);
-      const mimeMatch = context.match(mimeRegex);
-      const mimeType = mimeMatch ? mimeMatch[1] : "image/png";
-      const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
-      
-      try {
-        // Decode base64 to bytes
-        const bytes = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
-        console.log(`Image ${imgIndex}: ${bytes.length} bytes, ${mimeType}`);
-        
-        const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}-${imgIndex}.${ext}`;
-        const { data: uploadData, error: uploadError } = await storageClient.storage
-          .from('generated-images')
-          .upload(fileName, bytes, { contentType: mimeType, upsert: false });
-        
-        if (uploadError) {
-          console.error("Storage upload error:", uploadError.message);
-        } else {
-          const { data: urlData } = storageClient.storage
-            .from('generated-images')
-            .getPublicUrl(uploadData.path);
-          imageUrls.push(urlData.publicUrl);
-          console.log(`Uploaded image ${imgIndex} to Storage`);
-        }
-      } catch (e) {
-        console.error("Image processing error:", e);
-      }
-      imgIndex++;
-    }
-
-    console.log("Total images uploaded:", imageUrls.length);
-
-    return new Response(
-      JSON.stringify({ images: imageUrls }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(response.body, {
+      status: response.status,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": response.headers.get("Content-Type") || "application/json",
+      },
+    });
   } catch (error: any) {
     console.error("Generate error:", error);
     return new Response(JSON.stringify({ error: error.message || "生成失败" }), {

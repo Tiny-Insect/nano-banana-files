@@ -24,7 +24,53 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
     headers: customHeaders,
   });
   if (error) throw error;
-  return data;
+
+  // Edge Function now streams raw Gemini response.
+  // Extract images and upload to Storage on the client side.
+  if (data && data.error) return data;
+  if (data && data.images) return data; // Already processed format (shouldn't happen but safety)
+
+  // Handle raw Gemini native response
+  const images: string[] = [];
+  if (data?.candidates) {
+    for (const candidate of data.candidates) {
+      if (candidate?.finishReason === "SAFETY") {
+        return { error: "请求被安全过滤器拦截，请尝试修改提示词" };
+      }
+      if (candidate?.content?.parts) {
+        for (const part of candidate.content.parts) {
+          const imgData = part.inlineData || part.inline_data;
+          if (imgData?.data) {
+            const mimeType = imgData.mimeType || imgData.mime_type || "image/png";
+            const dataUrl = `data:${mimeType};base64,${imgData.data}`;
+            // Upload to Storage
+            try {
+              const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
+              const blob = await fetch(dataUrl).then(r => r.blob());
+              const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+              const { data: uploadData, error: uploadError } = await supabase.storage
+                .from('generated-images')
+                .upload(fileName, blob, { contentType: mimeType });
+              if (!uploadError && uploadData) {
+                const { data: urlData } = supabase.storage
+                  .from('generated-images')
+                  .getPublicUrl(uploadData.path);
+                images.push(urlData.publicUrl);
+              } else {
+                // Fallback: use data URL directly
+                images.push(dataUrl);
+              }
+            } catch {
+              images.push(dataUrl);
+            }
+          }
+        }
+      }
+    }
+  }
+
+  if (images.length > 0) return { images };
+  return { error: "未返回图片", raw: data };
 }
 
 function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {

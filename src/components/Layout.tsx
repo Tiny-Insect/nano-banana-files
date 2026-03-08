@@ -174,7 +174,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     <p className="text-sm font-medium mb-2">下载设置</p>
                     <div className="space-y-2">
                       <div>
-                        <label className="text-[11px] text-muted-foreground mb-1 block">文件名前缀</label>
+                        <label className="text-xs text-muted-foreground mb-1 block">文件名前缀</label>
                         <input
                           type="text"
                           value={settings.downloadPrefix}

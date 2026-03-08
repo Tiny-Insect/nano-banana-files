@@ -182,7 +182,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const modelLabel = MODEL_LABELS[task.model] || task.model;
 
   return (
-    <div className="mb-6">
+    <div className="mb-6 max-w-4xl">
       <div className="flex items-start gap-3 mb-3">
         {task.referenceImagePreviews.length > 0 && (
           <div className="flex gap-1.5 shrink-0">

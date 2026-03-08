@@ -45,15 +45,9 @@ function saveTasks(tasks: GenerationTask[]) {
     const toSave = tasks.slice(-20).map((t) => ({
       ...t,
       // Keep Storage URLs (short), drop large base64 data URLs
-      referenceImageBase64: (t.referenceImageBase64 || []).map(img =>
-        img.startsWith("http") ? img : ""
-      ).filter(Boolean),
-      referenceImagePreviews: (t.referenceImagePreviews || []).map(img =>
-        img.startsWith("http") ? img : ""
-      ).filter(Boolean),
-      generatedImages: t.generatedImages?.map((img) =>
-        img.length > 50000 ? "" : img
-      ) || [],
+      referenceImageBase64: (t.referenceImageBase64 || []).filter(img => img.startsWith("http")),
+      referenceImagePreviews: (t.referenceImagePreviews || []).filter(img => img.startsWith("http")),
+      generatedImages: (t.generatedImages || []).filter((img) => img.startsWith("http")),
     }));
     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(toSave));
   } catch (e) {

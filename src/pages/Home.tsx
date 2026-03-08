@@ -450,7 +450,7 @@ export default function Home() {
     }
   }, [aspectRatio, setModel, setAspectRatio]);
 
-  const uploadImageToStorage = useCallback(async (file: File): Promise<{ url: string; preview: string }> => {
+  const uploadImageToStorage = useCallback(async (file: File): Promise<string> => {
     const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${file.name.split('.').pop() || 'png'}`;
     const { data, error } = await supabase.storage
       .from('reference-images')
@@ -459,13 +459,7 @@ export default function Home() {
     const { data: urlData } = supabase.storage
       .from('reference-images')
       .getPublicUrl(data.path);
-    // Also create a local preview
-    const preview = await new Promise<string>((resolve) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result as string);
-      reader.readAsDataURL(file);
-    });
-    return { url: urlData.publicUrl, preview };
+    return urlData.publicUrl;
   }, []);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {

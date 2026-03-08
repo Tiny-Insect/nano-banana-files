@@ -5,7 +5,8 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
-import { X, Loader2, Download, ImageIcon, Sparkles, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
+import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
 
 function getCustomApiHeaders(): Record<string, string> {
@@ -88,6 +89,15 @@ function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
   );
 }
 
+function BananaIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 13c3.5-2 8-2 10 1a5.5 5.5 0 0 0 4-7c-3 1-7.5 2-14 6Z" />
+      <path d="M5.15 17.89c5.52-1.52 8.65-6.89 7-12C11.55 4 4.01 9.33 5.15 17.89Z" />
+    </svg>
+  );
+}
+
 const MODEL_LABELS: Record<string, string> = {
   "nanobanana-2": "NanoBanana 2",
   "nanobanana-pro": "NanoBanana Pro",
@@ -98,6 +108,8 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   const btn1Ref = useRef<HTMLButtonElement>(null);
   const btn2Ref = useRef<HTMLButtonElement>(null);
   const [slider, setSlider] = useState({ left: 2, width: 0 });
+
+  const isPro = model === "nanobanana-pro";
 
   useEffect(() => {
     const activeRef = model === "nanobanana-2" ? btn1Ref : btn2Ref;
@@ -114,8 +126,14 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   return (
     <div ref={containerRef} className="relative flex items-center bg-muted/30 rounded-md p-0.5 mr-0.5">
       <div
-        className="absolute top-0.5 bottom-0.5 rounded bg-primary transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-        style={{ left: slider.left, width: slider.width }}
+        className="absolute top-0.5 bottom-0.5 rounded transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{
+          left: slider.left,
+          width: slider.width,
+          background: isPro
+            ? "linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.8))"
+            : "hsl(var(--primary))",
+        }}
       />
       <button
         ref={btn1Ref}
@@ -124,17 +142,17 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
           model === "nanobanana-2" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        <Sparkles className="w-3.5 h-3.5" />
+        <Zap className="w-3.5 h-3.5" />
         NanoBanana 2
       </button>
       <button
         ref={btn2Ref}
         onClick={() => onChange("nanobanana-pro")}
         className={`relative z-10 flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-          model === "nanobanana-pro" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+          model === "nanobanana-pro" ? "text-pro-accent-foreground" : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        <Zap className="w-3.5 h-3.5" />
+        <BananaIcon className="w-3.5 h-3.5" />
         NanoBanana Pro
       </button>
     </div>
@@ -391,9 +409,12 @@ export default function Home() {
   const [isAtBottom, setIsAtBottom] = useState(true);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const isAtBottomRef = useRef(true);
   const prevTaskCountRef = useRef(tasks.length);
   const prevLastTaskRef = useRef<string | null>(null);
+  const isPro = model === "nanobanana-pro";
+  const accentActiveClass = isPro ? "text-pro-accent bg-pro-accent/10" : "text-primary bg-primary/10";
 
   useEffect(() => {
     requestAnimationFrame(() => {
@@ -446,7 +467,7 @@ export default function Home() {
     setModel(newModel);
     const newRatios = newModel === "nanobanana-2" ? NANOBANANA2_RATIOS : NANOBANANA_PRO_RATIOS;
     if (!newRatios.includes(aspectRatio as any)) {
-      setAspectRatio("1:1");
+      setAspectRatio("9:16");
     }
   }, [aspectRatio, setModel, setAspectRatio]);
 
@@ -488,6 +509,35 @@ export default function Home() {
     setReferenceImages((prev) => prev.filter((_, i) => i !== index));
     setReferenceImagePreviews((prev) => prev.filter((_, i) => i !== index));
   }, [setReferenceImages, setReferenceImagePreviews]);
+
+  const handleDrop = useCallback(async (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const files = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith("image/"));
+    if (files.length === 0) return;
+    const remaining = 10 - referenceImages.length;
+    const toUpload = files.slice(0, remaining);
+    for (const file of toUpload) {
+      try {
+        toast({ title: "正在上传参考图..." });
+        const url = await uploadImageToStorage(file);
+        setReferenceImagePreviews((prev) => [...prev, url]);
+        setReferenceImages((prev) => [...prev, url]);
+      } catch (err: any) {
+        toast({ title: err.message || "上传失败", variant: "destructive" });
+      }
+    }
+  }, [referenceImages.length, toast, setReferenceImages, setReferenceImagePreviews, uploadImageToStorage]);
+
+  const handleDragOver = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    if (e.dataTransfer.types.includes("Files")) setIsDragOver(true);
+  }, []);
+
+  const handleDragLeave = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  }, []);
 
   const autoResize = useCallback(() => {
     const el = textareaRef.current;
@@ -584,7 +634,7 @@ export default function Home() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey && canGenerate) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && canGenerate) {
       e.preventDefault();
       handleGenerate();
     }
@@ -764,8 +814,10 @@ export default function Home() {
           className="fixed bottom-0 left-0 right-0 px-6 pb-5 z-30"
         >
           <div className="max-w-3xl mx-auto">
+          <TooltipProvider delayDuration={300}>
           <div 
-            className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl"
+            className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl transition-colors duration-500"
+            style={isPro ? { borderColor: "hsl(var(--pro-accent) / 0.15)" } : undefined}
           >
               <>
                 <div className="flex items-start gap-3 p-5 pb-3">
@@ -775,31 +827,35 @@ export default function Home() {
                     accept="image/*"
                     className="hidden"
                     onChange={handleImageUpload}
+                    multiple
                   />
 
                   <div className="shrink-0 flex items-end">
-                    <div className="flex items-end">
+                    <div className="flex items-end gap-1">
                       {referenceImagePreviews.map((preview, i) => (
                         <div
                           key={i}
                           className="relative shrink-0 rounded-lg overflow-hidden border border-border/40 transition-all duration-300 ease-out cursor-pointer group/img"
                           style={{
-                            width: 48,
-                            height: 48,
-                            marginLeft: i > 0 ? -12 : 0,
+                            width: 44,
+                            height: 58,
+                            marginLeft: i > 0 ? -8 : 0,
                             zIndex: i,
+                            transform: "rotate(-15deg)",
                           }}
                           onMouseEnter={(e) => {
                             const el = e.currentTarget;
-                            el.style.width = "60px";
-                            el.style.height = "60px";
+                            el.style.width = "52px";
+                            el.style.height = "68px";
                             el.style.zIndex = "20";
+                            el.style.transform = "rotate(-12deg) scale(1.05)";
                           }}
                           onMouseLeave={(e) => {
                             const el = e.currentTarget;
-                            el.style.width = "48px";
-                            el.style.height = "48px";
+                            el.style.width = "44px";
+                            el.style.height = "58px";
                             el.style.zIndex = String(i);
+                            el.style.transform = "rotate(-15deg)";
                           }}
                         >
                           <img
@@ -819,10 +875,23 @@ export default function Home() {
                       {referenceImages.length < 10 && (
                         <button
                           onClick={() => fileInputRef.current?.click()}
-                          className="w-12 h-12 rounded-lg border border-dashed border-muted-foreground/20 flex items-center justify-center text-muted-foreground/30 shrink-0 transition-colors hover:border-muted-foreground/40"
-                          style={{ marginLeft: referenceImagePreviews.length > 0 ? -4 : 0 }}
+                          onDrop={handleDrop}
+                          onDragOver={handleDragOver}
+                          onDragLeave={handleDragLeave}
+                          className={`flex flex-col items-center justify-center rounded-lg border border-dashed shrink-0 transition-all duration-300 ${
+                            isDragOver
+                              ? "border-primary bg-primary/10 scale-110"
+                              : "border-muted-foreground/20 hover:border-muted-foreground/40 hover:scale-105"
+                          }`}
+                          style={{
+                            width: 44,
+                            height: 58,
+                            marginLeft: referenceImagePreviews.length > 0 ? -2 : 0,
+                            transform: "rotate(-15deg)",
+                          }}
                         >
-                          <Plus className="w-4 h-4" />
+                          <Plus className="w-3.5 h-3.5 text-muted-foreground/30" />
+                          <span className="text-[8px] text-muted-foreground/25 mt-0.5 leading-none">参考图</span>
                         </button>
                       )}
                     </div>
@@ -833,44 +902,54 @@ export default function Home() {
                     value={prompt}
                     onChange={(e) => setPrompt(e.target.value)}
                     onKeyDown={handleKeyDown}
-                    placeholder="输入提示词..."
-                    className="flex-1 bg-transparent border-0 outline-none resize-none text-base min-h-[72px] max-h-[180px] py-3 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar"
+                    placeholder="输入提示词...  Ctrl+Enter 发送"
+                    className="flex-1 bg-transparent border-0 outline-none resize-none text-sm min-h-[72px] max-h-[180px] py-3 text-foreground placeholder:text-muted-foreground/30 overflow-y-auto transition-[height] duration-200 ease-out custom-scrollbar font-sans tracking-wide leading-relaxed"
                     rows={2}
                   />
 
-                  <Button
-                    onClick={handleGenerate}
-                    disabled={!canGenerate}
-                    size="icon"
-                    className="shrink-0 mt-1 rounded-lg w-11 h-11"
-                  >
-                    <Send className="w-4 h-4" />
-                  </Button>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        onClick={handleGenerate}
+                        disabled={!canGenerate}
+                        size="icon"
+                        className="shrink-0 mt-1 rounded-lg w-11 h-11 transition-all duration-500"
+                        style={isPro ? {
+                          background: "linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.85))",
+                        } : undefined}
+                      >
+                        <Send className="w-4 h-4" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="text-xs">
+                      发送 <kbd className="ml-1 px-1 py-0.5 rounded bg-muted text-[10px]">Ctrl+↵</kbd>
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
 
-                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3">
+                <div className="border-t border-border/15 px-5 py-3 flex flex-wrap items-center gap-3 font-sans tracking-wide">
                   <ModelToggle model={model} onChange={handleModelChange} />
 
                   <span className="w-px h-6 bg-border/20" />
 
                   <Popover open={ratioOpen} onOpenChange={setRatioOpen}>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground tracking-wide">
                         <RatioIcon ratio={aspectRatio} active={false} />
                         {aspectRatio}
                         <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-2" align="start">
+                    <PopoverContent className="w-auto p-2.5 bg-card/80 backdrop-blur-xl border-border/30 shadow-2xl animate-in zoom-in-95 fade-in duration-200" align="start">
                       <div className="flex flex-wrap gap-1" style={{ maxWidth: 360 }}>
                         {currentRatios.map((ratio) => (
                           <button
                             key={ratio}
                             onClick={() => { setAspectRatio(ratio); setRatioOpen(false); }}
-                            className={`flex flex-col items-center gap-0.5 w-12 py-1.5 rounded-md text-[11px] transition-colors ${
+                            className={`flex flex-col items-center gap-0.5 w-12 py-1.5 rounded-md text-[10px] font-medium tracking-wide transition-all duration-200 ${
                               aspectRatio === ratio
-                                ? "bg-primary/15 text-primary"
-                                : "text-muted-foreground hover:bg-muted/50"
+                                ? (isPro ? "bg-pro-accent/15 text-pro-accent" : "bg-primary/15 text-primary")
+                                : "text-muted-foreground hover:bg-muted/50 hover:scale-105"
                             }`}
                           >
                             <RatioIcon ratio={ratio} active={aspectRatio === ratio} />
@@ -883,19 +962,19 @@ export default function Home() {
 
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground tracking-wide">
                         {resolution.toUpperCase()}
                         <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-1.5 min-w-[80px]" align="start">
+                    <PopoverContent className="w-auto p-1.5 min-w-[80px] bg-card/80 backdrop-blur-xl border-border/30 shadow-2xl animate-in zoom-in-95 fade-in duration-200" align="start">
                       <div className="flex flex-col gap-0.5">
                         {RESOLUTIONS.map((r) => (
                           <button
                             key={r}
                             onClick={() => setResolution(r)}
-                            className={`px-3 py-1.5 rounded-md text-sm text-left transition-colors ${
-                              resolution === r ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium text-left transition-colors tracking-wide ${
+                              resolution === r ? (isPro ? "bg-pro-accent/15 text-pro-accent" : "bg-primary/15 text-primary") : "text-muted-foreground hover:bg-muted/50"
                             }`}
                           >
                             {r.toUpperCase()}
@@ -907,19 +986,19 @@ export default function Home() {
 
                   <Popover>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-xs font-medium text-muted-foreground transition-colors hover:text-foreground tracking-wide">
                         {numImages} 张
                         <ChevronDown className="w-3 h-3 opacity-50" />
                       </button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-auto p-1.5 min-w-[70px]" align="start">
+                    <PopoverContent className="w-auto p-1.5 min-w-[70px] bg-card/80 backdrop-blur-xl border-border/30 shadow-2xl animate-in zoom-in-95 fade-in duration-200" align="start">
                       <div className="flex flex-col gap-0.5">
                         {[1, 2, 3, 4].map((n) => (
                           <button
                             key={n}
                             onClick={() => setNumImages(n)}
-                            className={`px-3 py-1.5 rounded-md text-sm text-left transition-colors ${
-                              numImages === n ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                            className={`px-3 py-1.5 rounded-md text-xs font-medium text-left transition-colors tracking-wide ${
+                              numImages === n ? (isPro ? "bg-pro-accent/15 text-pro-accent" : "bg-primary/15 text-primary") : "text-muted-foreground hover:bg-muted/50"
                             }`}
                           >
                             {n} 张
@@ -931,28 +1010,28 @@ export default function Home() {
 
                   <button
                     onClick={() => setWebSearch(!webSearch)}
-                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                    className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
                       webSearch
-                        ? "text-primary bg-primary/10"
+                        ? accentActiveClass
                         : "text-muted-foreground hover:bg-muted/50"
                     }`}
                     title="联网搜索"
                   >
-                    <Globe className="w-4 h-4" />
+                    <Globe className="w-3.5 h-3.5" />
                     联网
                   </button>
 
                   {model !== "nanobanana-pro" && (
                     <button
                       onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
-                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-sm transition-colors ${
+                      className={`flex items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium transition-all duration-300 tracking-wide ${
                         thinkingLevel === "deep"
-                          ? "text-primary bg-primary/10"
+                          ? accentActiveClass
                           : "text-muted-foreground hover:bg-muted/50"
                       }`}
                       title="深度思考"
                     >
-                      <Brain className="w-4 h-4" />
+                      <Brain className="w-3.5 h-3.5" />
                       思考
                     </button>
                   )}
@@ -961,6 +1040,7 @@ export default function Home() {
                 </div>
               </>
           </div>
+          </TooltipProvider>
           </div>
         </div>
       </div>

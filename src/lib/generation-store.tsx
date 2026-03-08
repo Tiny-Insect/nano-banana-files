@@ -100,7 +100,7 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
   const [prompt, setPrompt] = useState("");
   const [referenceImages, setReferenceImages] = useState<string[]>([]);
   const [referenceImagePreviews, setReferenceImagePreviews] = useState<string[]>([]);
-  const [aspectRatio, setAspectRatio] = useState("1:1");
+  const [aspectRatio, setAspectRatio] = useState("9:16");
   const [resolution, setResolution] = useState("2k");
   const [numImages, setNumImages] = useState(1);
   const [webSearch, setWebSearch] = useState(true);

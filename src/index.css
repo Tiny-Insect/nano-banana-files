@@ -38,6 +38,8 @@
   --destructive-foreground: 0 0% 98%;
   --input: 0 0% 75%;
   --ring: 210 92% 45%;
+  --pro-accent: 38 92% 50%;
+  --pro-accent-foreground: 0 0% 10%;
   --chart-1: 210 92% 38%;
   --chart-2: 173 80% 35%;
   --chart-3: 43 96% 38%;
@@ -102,6 +104,8 @@
   --destructive-foreground: 0 0% 98%;
   --input: 0 0% 30%;
   --ring: 210 92% 55%;
+  --pro-accent: 40 92% 55%;
+  --pro-accent-foreground: 0 0% 5%;
   --chart-1: 210 92% 62%;
   --chart-2: 173 80% 65%;
   --chart-3: 43 96% 62%;

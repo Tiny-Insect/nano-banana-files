@@ -89,6 +89,15 @@ function RatioIcon({ ratio, active }: { ratio: string; active: boolean }) {
   );
 }
 
+function BananaIcon({ className }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+      <path d="M4 13c3.5-2 8-2 10 1a5.5 5.5 0 0 0 4-7c-3 1-7.5 2-14 6Z" />
+      <path d="M5.15 17.89c5.52-1.52 8.65-6.89 7-12C11.55 4 4.01 9.33 5.15 17.89Z" />
+    </svg>
+  );
+}
+
 const MODEL_LABELS: Record<string, string> = {
   "nanobanana-2": "NanoBanana 2",
   "nanobanana-pro": "NanoBanana Pro",
@@ -99,6 +108,8 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   const btn1Ref = useRef<HTMLButtonElement>(null);
   const btn2Ref = useRef<HTMLButtonElement>(null);
   const [slider, setSlider] = useState({ left: 2, width: 0 });
+
+  const isPro = model === "nanobanana-pro";
 
   useEffect(() => {
     const activeRef = model === "nanobanana-2" ? btn1Ref : btn2Ref;
@@ -115,8 +126,14 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
   return (
     <div ref={containerRef} className="relative flex items-center bg-muted/30 rounded-md p-0.5 mr-0.5">
       <div
-        className="absolute top-0.5 bottom-0.5 rounded bg-primary transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]"
-        style={{ left: slider.left, width: slider.width }}
+        className="absolute top-0.5 bottom-0.5 rounded transition-all duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]"
+        style={{
+          left: slider.left,
+          width: slider.width,
+          background: isPro
+            ? "linear-gradient(135deg, hsl(var(--pro-accent)), hsl(var(--pro-accent) / 0.8))"
+            : "hsl(var(--primary))",
+        }}
       />
       <button
         ref={btn1Ref}
@@ -125,17 +142,17 @@ function ModelToggle({ model, onChange }: { model: string; onChange: (m: ModelTy
           model === "nanobanana-2" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        <Sparkles className="w-3.5 h-3.5" />
+        <Zap className="w-3.5 h-3.5" />
         NanoBanana 2
       </button>
       <button
         ref={btn2Ref}
         onClick={() => onChange("nanobanana-pro")}
         className={`relative z-10 flex items-center gap-1 px-3 py-1.5 rounded text-xs font-medium transition-colors duration-200 ${
-          model === "nanobanana-pro" ? "text-primary-foreground" : "text-muted-foreground hover:text-foreground"
+          model === "nanobanana-pro" ? "text-pro-accent-foreground" : "text-muted-foreground hover:text-foreground"
         }`}
       >
-        <Zap className="w-3.5 h-3.5" />
+        <BananaIcon className="w-3.5 h-3.5" />
         NanoBanana Pro
       </button>
     </div>

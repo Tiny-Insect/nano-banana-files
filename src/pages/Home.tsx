@@ -390,28 +390,6 @@ export default function Home() {
     }
   }, [aspectRatio, setModel, setAspectRatio]);
 
-  const compressImage = useCallback((dataUrl: string, maxSize = 1200): Promise<{ preview: string; base64: string }> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let { width, height } = img;
-        if (width > maxSize || height > maxSize) {
-          const scale = maxSize / Math.max(width, height);
-          width = Math.round(width * scale);
-          height = Math.round(height * scale);
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d")!;
-        ctx.drawImage(img, 0, 0, width, height);
-        const compressed = canvas.toDataURL("image/jpeg", 0.85);
-        resolve({ preview: compressed, base64: compressed.split(",")[1] });
-      };
-      img.src = dataUrl;
-    });
-  }, []);
-
   const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -424,15 +402,14 @@ export default function Home() {
       return;
     }
     const reader = new FileReader();
-    reader.onload = async () => {
-      const raw = reader.result as string;
-      const { preview, base64 } = await compressImage(raw);
-      setReferenceImagePreviews((prev) => [...prev, preview]);
-      setReferenceImages((prev) => [...prev, base64]);
+    reader.onload = () => {
+      const base64 = reader.result as string;
+      setReferenceImagePreviews((prev) => [...prev, base64]);
+      setReferenceImages((prev) => [...prev, base64.split(",")[1]]);
     };
     reader.readAsDataURL(file);
     if (fileInputRef.current) fileInputRef.current.value = "";
-  }, [referenceImages.length, toast, setReferenceImages, setReferenceImagePreviews, compressImage]);
+  }, [referenceImages.length, toast, setReferenceImages, setReferenceImagePreviews]);
 
   const removeImage = useCallback((index: number) => {
     setReferenceImages((prev) => prev.filter((_, i) => i !== index));

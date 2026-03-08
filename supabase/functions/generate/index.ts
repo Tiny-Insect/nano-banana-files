@@ -123,8 +123,6 @@ serve(async (req) => {
             thinkingConfig: {
               thinkingLevel: thinking_level === "deep" ? "HIGH" : "LOW",
             },
-          } : supportsThinking ? {
-            thinkingConfig: { thinkingLevel: "NONE" },
           } : {}),
         },
         ...(web_search ? { tools: [{ googleSearch: {} }] } : {}),

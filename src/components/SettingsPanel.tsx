@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Check, Info } from "lucide-react";
+import { Eye, EyeOff, Check, Info, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { type AppSettings, loadSettings, saveSettings } from "@/components/Layout";

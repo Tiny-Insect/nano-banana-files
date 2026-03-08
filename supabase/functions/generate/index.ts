@@ -132,7 +132,6 @@ serve(async (req) => {
     } else {
       // Third-party proxy (OpenAI-compatible)
       chatUrl = `${baseUrl}/v1/chat/completions`;
-      const imageSize = resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K";
 
       const contentParts: any[] = [];
       if (prompt) contentParts.push({ type: "text", text: prompt });

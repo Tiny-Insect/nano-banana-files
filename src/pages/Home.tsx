@@ -1092,17 +1092,6 @@ export default function Home() {
                 生成失败的任务将被直接删除
               </p>
             ) : null}
-            {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages.length > 0 && (
-              <div className="flex justify-end mb-2">
-                <button
-                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                  onClick={confirmDeleteToTrash}
-                >
-                  <Trash2 className="w-3.5 h-3.5" />
-                  移至最近删除
-                </button>
-              </div>
-            )}
             <div className="flex gap-2 justify-end">
               <Button
                 variant="outline"

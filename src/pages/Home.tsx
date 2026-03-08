@@ -602,7 +602,7 @@ export default function Home() {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey && canGenerate) {
+    if (e.key === "Enter" && (e.ctrlKey || e.metaKey) && canGenerate) {
       e.preventDefault();
       handleGenerate();
     }

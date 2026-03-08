@@ -392,43 +392,6 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   );
 }
 
-function Lightbox({ src, onClose, onDownload }: { src: string; onClose: () => void; onDownload: (url: string) => void }) {
-  const [visible, setVisible] = useState(false);
-  useEffect(() => {
-    requestAnimationFrame(() => setVisible(true));
-  }, []);
-  const handleClose = () => {
-    setVisible(false);
-    setTimeout(onClose, 200);
-  };
-  return (
-    <div
-      className={`fixed inset-0 z-[100] flex items-center justify-center cursor-pointer transition-all duration-200 ${visible ? "bg-black/80 backdrop-blur-sm" : "bg-black/0"}`}
-      onClick={handleClose}
-    >
-      <div className={`flex flex-col items-center gap-3 transition-all duration-300 ease-out ${visible ? "scale-100 opacity-100" : "scale-90 opacity-0"}`} onClick={(e) => e.stopPropagation()}>
-        <img
-          src={src}
-          alt="放大预览"
-          className="max-w-[90vw] max-h-[82vh] object-contain rounded-lg shadow-2xl"
-        />
-        <button
-          onClick={() => onDownload(src)}
-          className="flex items-center gap-2 px-5 py-2.5 rounded-full bg-white/15 hover:bg-white/25 text-white text-sm font-medium backdrop-blur-md transition-all duration-200 border border-white/10"
-        >
-          <Download className="w-4 h-4" />
-          下载原图
-        </button>
-      </div>
-      <button
-        onClick={handleClose}
-        className={`absolute top-4 right-4 w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition-all duration-200 ${visible ? "opacity-100" : "opacity-0"}`}
-      >
-        <X className="w-5 h-5" />
-      </button>
-    </div>
-  );
-}
 
 export default function Home() {
   const { toast } = useToast();

@@ -374,8 +374,8 @@ export default function Home() {
     aspectRatio, setAspectRatio,
     resolution, setResolution,
     numImages, setNumImages,
-    webSearch,
-    thinkingLevel,
+    webSearch, setWebSearch,
+    thinkingLevel, setThinkingLevel,
     tasks, addTask, updateTask, setTasks,
     lightboxImage, setLightboxImage,
   } = store;

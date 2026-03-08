@@ -214,23 +214,24 @@ serve(async (req) => {
       messages: [{ role: "user", content: contentParts }],
       modalities: ["text", "image"],
       n: num_images || 1,
-      image_config: {
-        image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
-        aspect_ratio: aspect_ratio,
-      },
     };
 
-    // Redundant configs for compatibility
-    requestBody.generation_config = {
-      response_modalities: ["Text", "Image"],
-      image_generation_config: {
+    // Only add these fields for custom API (not Lovable AI Gateway)
+    if (useCustom) {
+      requestBody.image_config = {
         image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
         aspect_ratio: aspect_ratio,
-      },
-    };
-
-    if (web_search) requestBody.web_search = true;
-    if (thinking_level) requestBody.thinking_level = thinking_level;
+      };
+      requestBody.generation_config = {
+        response_modalities: ["Text", "Image"],
+        image_generation_config: {
+          image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
+          aspect_ratio: aspect_ratio,
+        },
+      };
+      if (web_search) requestBody.web_search = true;
+      if (thinking_level) requestBody.thinking_level = thinking_level;
+    }
 
     console.log("Request:", chatUrl, "model:", apiModel);
 

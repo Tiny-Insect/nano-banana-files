@@ -421,7 +421,7 @@ export default function Home() {
         isAtBottomRef.current = atBottom;
         setIsAtBottom(atBottom);
         if (atBottom) setInputCollapsed(false);
-        else if (el.scrollHeight - el.scrollTop - el.clientHeight > 200) setInputCollapsed(true);
+        else if (el.scrollHeight - el.scrollTop - el.clientHeight > 80) setInputCollapsed(true);
       }, 50);
     };
     el.addEventListener("scroll", onScroll, { passive: true });

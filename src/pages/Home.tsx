@@ -926,18 +926,20 @@ export default function Home() {
                     联网
                   </button>
 
-                  <button
-                    onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
-                    className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
-                      thinkingLevel === "deep"
-                        ? "text-primary bg-primary/10"
-                        : "text-muted-foreground hover:bg-muted/50"
-                    }`}
-                    title="深度思考"
-                  >
-                    <Brain className="w-3.5 h-3.5" />
-                    思考
-                  </button>
+                  {model !== "nanobanana-pro" && (
+                    <button
+                      onClick={() => setThinkingLevel(thinkingLevel === "deep" ? "none" : "deep")}
+                      className={`flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors ${
+                        thinkingLevel === "deep"
+                          ? "text-primary bg-primary/10"
+                          : "text-muted-foreground hover:bg-muted/50"
+                      }`}
+                      title="深度思考"
+                    >
+                      <Brain className="w-3.5 h-3.5" />
+                      思考
+                    </button>
+                  )}
 
                   <span className="w-px h-5 bg-border/30" />
                 </div>

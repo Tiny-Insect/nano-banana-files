@@ -38,6 +38,15 @@ function extractImagesFromResponse(data: any): string[] {
     for (const choice of data.choices) {
       const msg = choice.message;
       if (!msg) continue;
+
+      // Handle message.images array (Google OpenAI-compatible format)
+      if (msg.images && Array.isArray(msg.images)) {
+        for (const imgObj of msg.images) {
+          if (imgObj.image_url?.url) images.push(imgObj.image_url.url);
+          else if (imgObj.url) images.push(imgObj.url);
+        }
+      }
+
       const content = msg.content;
       if (!content) continue;
 

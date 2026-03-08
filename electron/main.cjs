@@ -113,18 +113,33 @@ app.on("second-instance", () => {
 app.whenReady().then(() => {
   // Register custom protocol handler to serve local files
   protocol.handle("local-file", (request) => {
-    // URL format: local-file:///C:/path/to/file.png
-    // or local-file://C:/path/to/file.png
-    let filePath = decodeURIComponent(request.url.replace("local-file://", ""));
-    // Remove leading slash on Windows paths like /C:/...
-    if (process.platform === "win32" && filePath.startsWith("/") && filePath[2] === ":") {
-      filePath = filePath.slice(1);
+    try {
+      let filePath = decodeURIComponent(request.url.replace("local-file://", ""));
+      // Remove leading slash on Windows paths like /C:/...
+      if (process.platform === "win32" && filePath.startsWith("/") && filePath[2] === ":") {
+        filePath = filePath.slice(1);
+      }
+      // Normalize path separators
+      filePath = filePath.replace(/\//g, path.sep);
+      
+      if (!fs.existsSync(filePath)) {
+        console.error("[local-file] File not found:", filePath);
+        return new Response("Not found", { status: 404 });
+      }
+      
+      const data = fs.readFileSync(filePath);
+      const ext = path.extname(filePath).toLowerCase();
+      const mimeTypes = { ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp", ".gif": "image/gif" };
+      const contentType = mimeTypes[ext] || "application/octet-stream";
+      
+      return new Response(data, {
+        status: 200,
+        headers: { "Content-Type": contentType },
+      });
+    } catch (e) {
+      console.error("[local-file] Error:", e);
+      return new Response("Error", { status: 500 });
     }
-    // On Windows, file:// URLs need three slashes: file:///C:/path
-    const fileUrl = process.platform === "win32" 
-      ? "file:///" + filePath.replace(/\\/g, "/")
-      : "file://" + filePath;
-    return net.fetch(fileUrl);
   });
 
   // Window control IPC handlers

@@ -287,8 +287,8 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
           {task.prompt && (
             <div className="relative rounded-lg px-3 py-2 cursor-default">
               {/* Always visible: clipped to 2 lines with fade */}
-              <div className="prompt-fade-mask overflow-hidden max-h-[2.8em]">
-                <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
+              <div className="prompt-fade-mask overflow-hidden max-h-[3em]">
+                <p className="text-[15px] text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                   {task.prompt}
                 </p>
               </div>

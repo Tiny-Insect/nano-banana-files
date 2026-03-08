@@ -390,7 +390,25 @@ export default function Home() {
     }
   }, [aspectRatio, setModel, setAspectRatio]);
 
-  const handleImageUpload = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+  const uploadImageToStorage = useCallback(async (file: File): Promise<{ url: string; preview: string }> => {
+    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${file.name.split('.').pop() || 'png'}`;
+    const { data, error } = await supabase.storage
+      .from('reference-images')
+      .upload(fileName, file, { contentType: file.type });
+    if (error) throw new Error(`上传失败: ${error.message}`);
+    const { data: urlData } = supabase.storage
+      .from('reference-images')
+      .getPublicUrl(data.path);
+    // Also create a local preview
+    const preview = await new Promise<string>((resolve) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result as string);
+      reader.readAsDataURL(file);
+    });
+    return { url: urlData.publicUrl, preview };
+  }, []);
+
+  const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) {
@@ -401,15 +419,16 @@ export default function Home() {
       toast({ title: "最多上传10张参考图", variant: "destructive" });
       return;
     }
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64 = reader.result as string;
-      setReferenceImagePreviews((prev) => [...prev, base64]);
-      setReferenceImages((prev) => [...prev, base64.split(",")[1]]);
-    };
-    reader.readAsDataURL(file);
+    try {
+      toast({ title: "正在上传参考图..." });
+      const { url, preview } = await uploadImageToStorage(file);
+      setReferenceImagePreviews((prev) => [...prev, preview]);
+      setReferenceImages((prev) => [...prev, url]);
+    } catch (err: any) {
+      toast({ title: err.message || "上传失败", variant: "destructive" });
+    }
     if (fileInputRef.current) fileInputRef.current.value = "";
-  }, [referenceImages.length, toast, setReferenceImages, setReferenceImagePreviews]);
+  }, [referenceImages.length, toast, setReferenceImages, setReferenceImagePreviews, uploadImageToStorage]);
 
   const removeImage = useCallback((index: number) => {
     setReferenceImages((prev) => prev.filter((_, i) => i !== index));
@@ -466,7 +485,7 @@ export default function Home() {
       num_images: numImages,
       web_search: !!webSearch,
       thinking_level: thinkingLevel || "fast",
-      images: task.referenceImageBase64.length > 0 ? task.referenceImageBase64 : [],
+      image_urls: task.referenceImageBase64.length > 0 ? task.referenceImageBase64 : [],
     };
 
     try {
@@ -577,7 +596,7 @@ export default function Home() {
       num_images: task.numImages,
       web_search: !!reWebSearch,
       thinking_level: reThinkingLevel || "fast",
-      images: refBase64,
+      image_urls: refBase64,
     };
 
     try {

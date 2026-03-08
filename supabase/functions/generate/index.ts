@@ -110,12 +110,17 @@ serve(async (req) => {
       model,
       prompt,
       images,
+      image_urls,
       aspect_ratio,
       resolution,
       num_images,
       web_search,
       thinking_level,
     } = body;
+
+    // Combine: prefer image_urls (Storage URLs), fall back to legacy base64 images
+    const refImageUrls: string[] = image_urls && image_urls.length > 0 ? image_urls : [];
+    const refImageBase64: string[] = !refImageUrls.length && images && images.length > 0 ? images : [];
 
     // Frontend can override API URL/Key via headers
     const customApiUrl = req.headers.get("x-custom-api-url")?.trim();
@@ -155,8 +160,16 @@ serve(async (req) => {
       // Build native Gemini content parts
       const parts: any[] = [];
       if (prompt) parts.push({ text: prompt });
-      if (images && images.length > 0) {
-        for (const img of images) {
+      // Use fileUri for URL-based images (no memory overhead)
+      if (refImageUrls.length > 0) {
+        for (const url of refImageUrls) {
+          parts.push({ fileData: { mimeType: "image/jpeg", fileUri: url } });
+        }
+        if (!prompt) parts.unshift({ text: "Based on the reference image(s), generate a similar image." });
+      }
+      // Legacy: base64 inline (small images only)
+      if (refImageBase64.length > 0) {
+        for (const img of refImageBase64) {
           const raw = img.startsWith("data:") ? img.split(",")[1] : img;
           parts.push({ inlineData: { mimeType: "image/png", data: raw } });
         }
@@ -195,8 +208,15 @@ serve(async (req) => {
 
       const contentParts: any[] = [];
       if (prompt) contentParts.push({ type: "text", text: prompt });
-      if (images && images.length > 0) {
-        for (const img of images) {
+      // Use URLs for third-party proxies too
+      if (refImageUrls.length > 0) {
+        for (const url of refImageUrls) {
+          contentParts.push({ type: "image_url", image_url: { url } });
+        }
+        if (!prompt) contentParts.unshift({ type: "text", text: "Based on the reference image(s), generate a similar image." });
+      }
+      if (refImageBase64.length > 0) {
+        for (const img of refImageBase64) {
           const prefix = img.startsWith("data:") ? img : `data:image/png;base64,${img}`;
           contentParts.push({ type: "image_url", image_url: { url: prefix } });
         }

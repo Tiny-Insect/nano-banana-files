@@ -86,7 +86,7 @@ export function getStorageConfig(): StorageConfig {
     const s = JSON.parse(raw);
     return {
       downloadPath: s.downloadPath || "",
-      maxCacheMB: s.maxCacheMB || 500,
+      maxCacheMB: s.maxCacheMB ?? null,
       downloadPrefix: s.downloadPrefix || "LumenDust",
       downloadFormat: s.downloadFormat || "png",
     };

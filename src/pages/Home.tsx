@@ -1287,6 +1287,7 @@ export default function Home() {
         </div>
       )}
 
+      {flyingImage && (
         <div
           className="fixed z-[200] w-10 h-10 rounded-md overflow-hidden border-2 border-primary/50 shadow-lg pointer-events-none"
           style={{

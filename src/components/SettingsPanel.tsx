@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Eye, EyeOff, Check, Info } from "lucide-react";
+import { Eye, EyeOff, Check, Info, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { type AppSettings, loadSettings, saveSettings } from "@/components/Layout";
@@ -30,7 +30,21 @@ export default function SettingsPanel() {
         <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-[2px] transition-opacity duration-300 pointer-events-none" />
       )}
       <div className="space-y-3">
-        <p className="text-sm font-medium">API 配置</p>
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-medium">API 配置</p>
+          {(settings.customApiUrl || settings.customApiKey) && (
+            <button
+              onClick={() => {
+                setSettings({ ...settings, customApiUrl: "", customApiKey: "" });
+              }}
+              className="flex items-center gap-1 text-[10px] text-destructive/70 hover:text-destructive transition-colors"
+              title="清空 API URL 和 Key"
+            >
+              <Trash2 className="w-3 h-3" />
+              清空
+            </button>
+          )}
+        </div>
         <div className="space-y-2">
           <div>
             <div className="flex items-center gap-1 mb-1">

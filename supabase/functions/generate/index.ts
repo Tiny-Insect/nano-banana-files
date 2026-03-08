@@ -111,7 +111,15 @@ serve(async (req) => {
             imageSize,
             ...(aspect_ratio ? { aspectRatio: aspect_ratio } : {}),
           },
+          ...(thinking_level && thinking_level !== "none" ? {
+            thinkingConfig: {
+              thinkingLevel: thinking_level === "deep" ? "HIGH" : "LOW",
+            },
+          } : {
+            thinkingConfig: { thinkingLevel: "NONE" },
+          }),
         },
+        ...(web_search ? { tools: [{ googleSearch: {} }] } : {}),
       };
 
       reqHeaders = {

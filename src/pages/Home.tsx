@@ -750,7 +750,7 @@ export default function Home() {
         </div>
 
         {!isAtBottom && tasks.length > 0 && (
-          <div className="absolute bottom-52 left-0 right-0 flex justify-center z-20 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute bottom-56 left-0 right-0 flex justify-center z-20 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <button
               onClick={scrollToBottom}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium shadow-lg hover:bg-primary transition-colors"

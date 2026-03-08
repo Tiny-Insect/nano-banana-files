@@ -1238,35 +1238,44 @@ export default function Home() {
                 生成失败的任务将被直接删除
               </p>
             ) : null}
-            <div className="flex flex-col gap-2">
-              {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages.length > 0 && (
+            {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages.length > 0 && (
+              <div className="flex justify-end mb-2">
+                <button
+                  className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                  onClick={confirmDeleteToTrash}
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                  移至最近删除
+                </button>
+              </div>
+            )}
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 px-4 text-xs"
+                onClick={() => setDeleteConfirmTask(null)}
+              >
+                取消
+              </Button>
+              {deleteConfirmTask.status === "complete" && deleteConfirmTask.generatedImages.length > 0 ? (
                 <Button
-                  variant="outline"
                   size="sm"
-                  className="h-8 w-full text-xs"
+                  className="h-8 px-4 text-xs bg-amber-500/15 text-amber-400 border border-amber-500/30 hover:bg-amber-500/25"
                   onClick={confirmRemoveFromQueue}
                 >
                   仅从队列中移除
                 </Button>
-              )}
-              <div className="flex gap-2 justify-end">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="h-8 px-4 text-xs"
-                  onClick={() => setDeleteConfirmTask(null)}
-                >
-                  取消
-                </Button>
+              ) : (
                 <Button
                   variant="destructive"
                   size="sm"
                   className="h-8 px-4 text-xs"
                   onClick={confirmDeleteToTrash}
                 >
-                  移至最近删除
+                  删除
                 </Button>
-              </div>
+              )}
             </div>
           </div>
         </div>

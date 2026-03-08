@@ -55,12 +55,17 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     return () => window.removeEventListener("theme-changed", themeHandler);
   }, []);
 
+  const isElectron = !!(window as any).electronAPI?.isElectron;
+
   return (
     <div className="min-h-screen flex flex-col relative z-[1]">
-      <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
-        <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
+      <nav
+        className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50"
+        style={isElectron ? { WebkitAppRegion: 'drag' } as React.CSSProperties : undefined}
+      >
+        <div className={`max-w-5xl mx-auto px-4 flex items-center justify-between h-12 ${isElectron ? 'pr-36' : ''}`}>
           <span className="select-none pointer-events-none" style={{ fontFamily: "'Dancing Script', cursive", fontSize: "28px", fontWeight: 700, lineHeight: 1 }}>LumenDust</span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1" style={isElectron ? { WebkitAppRegion: 'no-drag' } as React.CSSProperties : undefined}>
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>
                 <button

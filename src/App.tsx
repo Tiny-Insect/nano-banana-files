@@ -7,6 +7,7 @@ import { queryClient } from "@/lib/queryClient";
 import { GenerationProvider } from "@/lib/generation-store";
 import Home from "@/pages/Home";
 import Assets from "@/pages/Assets";
+import RecentlyDeleted from "@/pages/RecentlyDeleted";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
 

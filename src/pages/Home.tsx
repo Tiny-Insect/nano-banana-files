@@ -310,8 +310,9 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
         <div className="flex flex-wrap gap-3">
           {(() => {
             const ratioWidths: Record<string, number> = {
-              "1:1": 180, "4:3": 200, "3:2": 210, "16:9": 260, "21:9": 320,
-              "3:4": 150, "2:3": 140, "9:16": 120,
+              "1:1": 180, "5:4": 190, "4:3": 200, "3:2": 220, "16:9": 280, "21:9": 360,
+              "4:1": 420, "8:1": 500,
+              "4:5": 160, "3:4": 150, "2:3": 140, "9:16": 120, "1:4": 100, "1:8": 80,
             };
             const adaptiveWidth = ratioWidths[task.aspectRatio] || 180;
             return task.generatedImages.map((img, i) => {

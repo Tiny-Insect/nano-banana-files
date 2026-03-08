@@ -726,7 +726,7 @@ export default function Home() {
   return (
     <Layout>
       <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 overflow-hidden relative">
-        <div ref={feedRef} className="flex-1 py-6 overflow-y-auto flex flex-col min-h-0">
+        <div ref={feedRef} className="flex-1 py-6 pb-48 overflow-y-auto flex flex-col min-h-0">
           {tasks.length > 0 ? (
             <div className="mt-auto">
               {tasks.map((task) => (
@@ -752,7 +752,7 @@ export default function Home() {
         </div>
 
         {!isAtBottom && tasks.length > 0 && (
-          <div className="flex justify-center pb-2 animate-in fade-in slide-in-from-bottom-2 duration-200">
+          <div className="absolute bottom-52 left-0 right-0 flex justify-center z-20 animate-in fade-in slide-in-from-bottom-2 duration-200">
             <button
               onClick={scrollToBottom}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium shadow-lg hover:bg-primary transition-colors"
@@ -764,10 +764,11 @@ export default function Home() {
         )}
 
         <div
-          className="pb-4 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] flex flex-col justify-end"
+          className={`absolute bottom-0 left-0 right-0 px-4 pb-4 z-10 transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]`}
         >
+          <div className="max-w-3xl mx-auto">
           <div 
-            className={`rounded-xl border border-border/50 bg-card/60 backdrop-blur-sm transition-all duration-300 ease-in-out ${inputCollapsed ? "cursor-pointer hover:border-border/80" : ""}`}
+            className={`rounded-xl border border-border/50 bg-card/95 backdrop-blur-md shadow-lg transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)] ${inputCollapsed ? "cursor-pointer hover:border-border/80" : ""}`}
             onClick={() => { if (inputCollapsed) { setInputCollapsed(false); } }}
           >
             {inputCollapsed ? (
@@ -984,6 +985,7 @@ export default function Home() {
                 </div>
               </>
             )}
+          </div>
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
+import { useGenerationStore, createThumbnail, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
 import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -25,13 +25,12 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
   });
   if (error) throw error;
 
-  // Edge Function now streams raw Gemini response.
-  // Extract images and upload to Storage on the client side.
   if (data && data.error) return data;
-  if (data && data.images) return data; // Already processed format (shouldn't happen but safety)
+  if (data && data.images) return data;
 
   // Handle raw Gemini native response
   const images: string[] = [];
+  const thumbnails: string[] = [];
   if (data?.candidates) {
     for (const candidate of data.candidates) {
       if (candidate?.finishReason === "SAFETY") {
@@ -43,25 +42,46 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
           if (imgData?.data) {
             const mimeType = imgData.mimeType || imgData.mime_type || "image/png";
             const dataUrl = `data:${mimeType};base64,${imgData.data}`;
-            // Upload to Storage
             try {
               const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
               const blob = await fetch(dataUrl).then(r => r.blob());
-              const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+              const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+
+              // Upload original
               const { data: uploadData, error: uploadError } = await supabase.storage
                 .from('generated-images')
-                .upload(fileName, blob, { contentType: mimeType });
+                .upload(`${baseName}.${ext}`, blob, { contentType: mimeType });
+
               if (!uploadError && uploadData) {
                 const { data: urlData } = supabase.storage
                   .from('generated-images')
                   .getPublicUrl(uploadData.path);
                 images.push(urlData.publicUrl);
+
+                // Create and upload thumbnail
+                try {
+                  const thumbBlob = await createThumbnail(blob, 280);
+                  const { data: thumbUpload, error: thumbErr } = await supabase.storage
+                    .from('generated-images')
+                    .upload(`thumb_${baseName}.jpg`, thumbBlob, { contentType: "image/jpeg" });
+                  if (!thumbErr && thumbUpload) {
+                    const { data: thumbUrl } = supabase.storage
+                      .from('generated-images')
+                      .getPublicUrl(thumbUpload.path);
+                    thumbnails.push(thumbUrl.publicUrl);
+                  } else {
+                    thumbnails.push(urlData.publicUrl); // fallback to original
+                  }
+                } catch {
+                  thumbnails.push(urlData.publicUrl);
+                }
               } else {
-                // Fallback: use data URL directly
                 images.push(dataUrl);
+                thumbnails.push(dataUrl);
               }
             } catch {
               images.push(dataUrl);
+              thumbnails.push(dataUrl);
             }
           }
         }
@@ -69,7 +89,7 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
     }
   }
 
-  if (images.length > 0) return { images };
+  if (images.length > 0) return { images, thumbnails };
   return { error: "未返回图片", raw: data };
 }
 
@@ -379,6 +399,8 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
         <div className="flex flex-wrap gap-3">
           {task.generatedImages.map((img, i) => {
             const src = img.startsWith("data:") || img.startsWith("http") ? img : `data:image/png;base64,${img}`;
+            const thumbSrc = task.thumbnails?.[i] || src;
+            const displaySrc = thumbSrc.startsWith("data:") || thumbSrc.startsWith("http") ? thumbSrc : `data:image/png;base64,${thumbSrc}`;
             return (
               <div
                 key={i}
@@ -388,8 +410,9 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                 onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 0 0 transparent"; }}
               >
                 <img
-                  src={src}
+                  src={displaySrc}
                   alt={`生成 ${i + 1}`}
+                  loading="lazy"
                   className="w-full h-auto cursor-pointer transition-transform duration-300 ease-out group-hover/img:scale-[1.04]"
                   onClick={() => onClickImage(src)}
                 />
@@ -488,6 +511,7 @@ export default function Home() {
     thinkingLevel, setThinkingLevel,
     tasks, addTask, updateTask, setTasks,
     lightboxImage, setLightboxImage,
+    visibleCount, loadMore, hasMore, clearOldTasks,
   } = store;
 
   const [isAtBottom, setIsAtBottom] = useState(true);
@@ -653,6 +677,7 @@ export default function Home() {
       numImages,
       status: "creating",
       generatedImages: [],
+      thumbnails: [],
       createdAt: Date.now(),
       webSearch,
       thinkingLevel,
@@ -689,10 +714,12 @@ export default function Home() {
       const results = await Promise.allSettled(promises);
 
       const allImages: string[] = [];
+      const allThumbs: string[] = [];
       let lastError = "";
       for (const r of results) {
         if (r.status === "fulfilled" && r.value.images) {
           allImages.push(...r.value.images);
+          allThumbs.push(...(r.value.thumbnails || r.value.images));
         } else if (r.status === "fulfilled" && r.value.error) {
           lastError = r.value.error;
         } else if (r.status === "rejected") {
@@ -703,7 +730,7 @@ export default function Home() {
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
 
       if (allImages.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: allImages, completedAt: Date.now() });
+        updateTask(taskId, { status: "complete", generatedImages: allImages, thumbnails: allThumbs, completedAt: Date.now() });
       } else {
         updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
       }
@@ -786,6 +813,7 @@ export default function Home() {
       numImages: task.numImages,
       status: "creating",
       generatedImages: [],
+      thumbnails: [],
       createdAt: Date.now(),
       webSearch: reWebSearch,
       thinkingLevel: reThinkingLevel,
@@ -814,10 +842,12 @@ export default function Home() {
       const results = await Promise.allSettled(promises);
 
       const allImages: string[] = [];
+      const allThumbs: string[] = [];
       let lastError = "";
       for (const r of results) {
         if (r.status === "fulfilled" && r.value.images) {
           allImages.push(...r.value.images);
+          allThumbs.push(...(r.value.thumbnails || r.value.images));
         } else if (r.status === "fulfilled" && r.value.error) {
           lastError = r.value.error;
         } else if (r.status === "rejected") {
@@ -828,7 +858,7 @@ export default function Home() {
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
 
       if (allImages.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: allImages, completedAt: Date.now() });
+        updateTask(taskId, { status: "complete", generatedImages: allImages, thumbnails: allThumbs, completedAt: Date.now() });
       } else {
         updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
       }
@@ -860,7 +890,27 @@ export default function Home() {
         <div ref={feedRef} className="flex-1 py-6 pb-48 overflow-y-auto flex flex-col min-h-0 custom-scrollbar">
           {tasks.length > 0 ? (
             <div className="mt-auto">
-              {tasks.map((task) => (
+              {hasMore && (
+                <div className="flex justify-center py-4">
+                  <button
+                    onClick={loadMore}
+                    className="px-4 py-2 rounded-lg text-xs text-muted-foreground hover:text-foreground bg-muted/30 hover:bg-muted/50 transition-colors border border-border/30"
+                  >
+                    加载更早的任务 ({tasks.length - visibleCount} 条隐藏)
+                  </button>
+                </div>
+              )}
+              {tasks.length > 50 && (
+                <div className="flex justify-center pb-2">
+                  <button
+                    onClick={() => { clearOldTasks(30); toast({ title: "已清理旧任务" }); }}
+                    className="px-3 py-1 rounded-md text-[10px] text-muted-foreground/40 hover:text-destructive/70 transition-colors"
+                  >
+                    清理旧缓存 (保留最近30条)
+                  </button>
+                </div>
+              )}
+              {tasks.slice(-visibleCount).map((task) => (
                 <TaskCard
                   key={task.id}
                   task={task}

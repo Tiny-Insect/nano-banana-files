@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, type ReactNode } from "react";
+import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from "react";
 
 export type ModelType = "nanobanana-2" | "nanobanana-pro";
 
@@ -16,6 +16,7 @@ export interface GenerationTask {
   status: TaskStatus;
   statusDetail?: string;
   generatedImages: string[];
+  thumbnails: string[];
   error?: string;
   createdAt?: number;
   completedAt?: number;
@@ -24,6 +25,8 @@ export interface GenerationTask {
 }
 
 const TASKS_STORAGE_KEY = "nanobanana_tasks";
+const MAX_STORED_TASKS = 100;
+const PAGE_SIZE = 20;
 
 function loadTasks(): GenerationTask[] {
   try {
@@ -32,6 +35,7 @@ function loadTasks(): GenerationTask[] {
     const tasks = JSON.parse(raw) as GenerationTask[];
     return tasks.map((t) => ({
       ...t,
+      thumbnails: t.thumbnails || [],
       status: (t.generatedImages && t.generatedImages.length > 0) ? "complete" : (t.status === "complete" || t.status === "error" ? t.status : "error" as TaskStatus),
       error: (t.status !== "complete" && t.status !== "error" && (!t.generatedImages || t.generatedImages.length === 0)) ? "页面刷新后任务中断" : t.error,
     }));
@@ -42,28 +46,57 @@ function loadTasks(): GenerationTask[] {
 
 function saveTasks(tasks: GenerationTask[]) {
   try {
-    const toSave = tasks.slice(-20).map((t) => ({
+    const toSave = tasks.slice(-MAX_STORED_TASKS).map((t) => ({
       ...t,
-      // Keep Storage URLs (short), drop large base64 data URLs
       referenceImageBase64: (t.referenceImageBase64 || []).filter(img => img.startsWith("http")),
       referenceImagePreviews: (t.referenceImagePreviews || []).filter(img => img.startsWith("http")),
       generatedImages: (t.generatedImages || []).filter((img) => img.startsWith("http")),
+      thumbnails: (t.thumbnails || []).filter((img) => img.startsWith("http")),
     }));
     localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(toSave));
   } catch (e) {
     console.warn("Failed to save tasks to localStorage:", e);
     try {
-      const minimal = tasks.slice(-5).map(t => ({
+      const minimal = tasks.slice(-10).map(t => ({
         ...t,
         referenceImageBase64: [],
         referenceImagePreviews: [],
         generatedImages: [],
+        thumbnails: [],
       }));
       localStorage.setItem(TASKS_STORAGE_KEY, JSON.stringify(minimal));
     } catch {
       try { localStorage.removeItem(TASKS_STORAGE_KEY); } catch {}
     }
   }
+}
+
+/** Create a thumbnail blob from an image blob using canvas */
+export async function createThumbnail(blob: Blob, maxSize = 280): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    const url = URL.createObjectURL(blob);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const { width, height } = img;
+      const scale = Math.min(maxSize / width, maxSize / height, 1);
+      const w = Math.round(width * scale);
+      const h = Math.round(height * scale);
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("Canvas not supported")); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      canvas.toBlob(
+        (b) => b ? resolve(b) : reject(new Error("toBlob failed")),
+        "image/jpeg",
+        0.75
+      );
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Image load failed")); };
+    img.src = url;
+  });
 }
 
 interface GenerationState {
@@ -77,6 +110,7 @@ interface GenerationState {
   webSearch: boolean;
   thinkingLevel: string;
   tasks: GenerationTask[];
+  visibleCount: number;
   lightboxImage: string | null;
   setModel: (m: ModelType) => void;
   setPrompt: (p: string) => void;
@@ -91,6 +125,9 @@ interface GenerationState {
   setLightboxImage: (img: string | null) => void;
   addTask: (task: GenerationTask) => void;
   updateTask: (id: string, updates: Partial<GenerationTask>) => void;
+  loadMore: () => void;
+  hasMore: boolean;
+  clearOldTasks: (keepLast: number) => void;
 }
 
 const GenerationContext = createContext<GenerationState | null>(null);
@@ -107,18 +144,29 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
   const [thinkingLevel, setThinkingLevel] = useState("deep");
   const [tasks, setTasks] = useState<GenerationTask[]>(() => loadTasks());
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   useEffect(() => {
     saveTasks(tasks);
   }, [tasks]);
 
-  const addTask = (task: GenerationTask) => {
-    setTasks((prev) => [...prev, task]);
-  };
+  const addTask = useCallback((task: GenerationTask) => {
+    setTasks((prev) => [...prev, { ...task, thumbnails: task.thumbnails || [] }]);
+  }, []);
 
-  const updateTask = (id: string, updates: Partial<GenerationTask>) => {
+  const updateTask = useCallback((id: string, updates: Partial<GenerationTask>) => {
     setTasks((prev) => prev.map((t) => (t.id === id ? { ...t, ...updates } : t)));
-  };
+  }, []);
+
+  const loadMore = useCallback(() => {
+    setVisibleCount((prev) => prev + PAGE_SIZE);
+  }, []);
+
+  const hasMore = visibleCount < tasks.length;
+
+  const clearOldTasks = useCallback((keepLast: number) => {
+    setTasks((prev) => prev.slice(-keepLast));
+  }, []);
 
   return (
     <GenerationContext.Provider
@@ -134,7 +182,10 @@ export function GenerationProvider({ children }: { children: ReactNode }) {
         thinkingLevel, setThinkingLevel,
         tasks, setTasks,
         lightboxImage, setLightboxImage,
+        visibleCount,
         addTask, updateTask,
+        loadMore, hasMore,
+        clearOldTasks,
       }}
     >
       {children}

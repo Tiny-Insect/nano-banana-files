@@ -881,27 +881,53 @@ export default function Home() {
                     </PopoverContent>
                   </Popover>
 
-                  <Select value={resolution} onValueChange={setResolution}>
-                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-sm px-2.5 py-1.5 gap-1 text-muted-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {RESOLUTIONS.map((r) => (
-                        <SelectItem key={r} value={r}>{r.toUpperCase()}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                        {resolution.toUpperCase()}
+                        <ChevronDown className="w-3 h-3 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-1.5 min-w-[80px]" align="start">
+                      <div className="flex flex-col gap-0.5">
+                        {RESOLUTIONS.map((r) => (
+                          <button
+                            key={r}
+                            onClick={() => setResolution(r)}
+                            className={`px-3 py-1.5 rounded-md text-sm text-left transition-colors ${
+                              resolution === r ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            {r.toUpperCase()}
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
 
-                  <Select value={String(numImages)} onValueChange={(v) => setNumImages(Number(v))}>
-                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-sm px-2.5 py-1.5 gap-1 text-muted-foreground">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {[1, 2, 3, 4].map((n) => (
-                        <SelectItem key={n} value={String(n)}>{n} 张</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
+                        {numImages} 张
+                        <ChevronDown className="w-3 h-3 opacity-50" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-1.5 min-w-[70px]" align="start">
+                      <div className="flex flex-col gap-0.5">
+                        {[1, 2, 3, 4].map((n) => (
+                          <button
+                            key={n}
+                            onClick={() => setNumImages(n)}
+                            className={`px-3 py-1.5 rounded-md text-sm text-left transition-colors ${
+                              numImages === n ? "bg-primary/15 text-primary" : "text-muted-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            {n} 张
+                          </button>
+                        ))}
+                      </div>
+                    </PopoverContent>
+                  </Popover>
 
                   <button
                     onClick={() => setWebSearch(!webSearch)}

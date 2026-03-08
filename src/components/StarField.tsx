@@ -92,11 +92,10 @@ export default function StarField() {
         const a = p.opacity * twinkle;
 
         if (isDark) {
-          // Dark mode: soft warm white particles
-          ctx.fillStyle = `rgba(220,225,235,${a * 0.6})`;
+          ctx.fillStyle = `rgba(200,210,230,${a * 0.65})`;
         } else {
-          // Light mode: warm gray-blue dust, visible on off-white
-          ctx.fillStyle = `rgba(120,130,150,${a * 0.35})`;
+          // Darker particles on light bg for visibility
+          ctx.fillStyle = `rgba(90,100,130,${a * 0.5})`;
         }
 
         ctx.beginPath();

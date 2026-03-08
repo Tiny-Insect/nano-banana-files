@@ -512,7 +512,7 @@ export default function Home() {
     visibleCount, loadMore, hasMore, clearOldTasks,
   } = store;
 
-  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isAtBottom, _setIsAtBottom] = useState(true);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);

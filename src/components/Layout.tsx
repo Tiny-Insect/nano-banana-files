@@ -50,6 +50,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [showKey, setShowKey] = useState(false);
   const [saved, setSaved] = useState(false);
   const [dark, setDark] = useState(() => isDarkMode());
+  const [apiInfoOpen, setApiInfoOpen] = useState(false);
   const [cacheInfoOpen, setCacheInfoOpen] = useState(false);
 
   useEffect(() => {

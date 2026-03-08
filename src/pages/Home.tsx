@@ -201,14 +201,14 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
         <div className="group/prompt flex-1 min-w-0 relative">
           {task.prompt && (
             <div className="relative rounded-lg px-3 py-2 cursor-default">
-              {/* Always visible: clipped to 2 lines */}
-              <div className="overflow-hidden max-h-[2.8em]">
+              {/* Always visible: clipped to 2 lines with fade */}
+              <div className="prompt-fade-mask overflow-hidden max-h-[2.8em]">
                 <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words">
                   {task.prompt}
                 </p>
               </div>
-              {/* Hover overlay: expands above, doesn't push layout */}
-              <div className="absolute left-0 right-0 bottom-0 z-20 rounded-lg px-3 py-2 bg-card/95 backdrop-blur-md border border-border/30 shadow-lg opacity-0 pointer-events-none group-hover/prompt:opacity-100 group-hover/prompt:pointer-events-auto transition-all duration-200 origin-bottom">
+              {/* Hover overlay: expands downward over images */}
+              <div className="absolute left-0 right-0 top-0 z-20 rounded-lg px-3 py-2 bg-card/95 backdrop-blur-md border border-border/30 shadow-lg opacity-0 pointer-events-none group-hover/prompt:opacity-100 group-hover/prompt:pointer-events-auto transition-all duration-200 origin-top">
                 <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap break-words max-h-[200px] overflow-y-auto custom-scrollbar">
                   {task.prompt}
                 </p>

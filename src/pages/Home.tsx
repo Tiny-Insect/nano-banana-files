@@ -222,6 +222,8 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                         ["模型", modelLabel],
                         ["比例", task.aspectRatio],
                         ["分辨率", task.resolution.toUpperCase()],
+                        ["联网搜索", task.webSearch ? "是" : "否"],
+                        ["深度思考", task.thinkingLevel === "deep" ? "深度" : "快速"],
                       ].map(([label, value]) => (
                         <div key={label} className="flex items-center justify-between">
                           <span className="text-[11px] text-muted-foreground/60">{label}</span>

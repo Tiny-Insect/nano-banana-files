@@ -3,7 +3,6 @@ import { useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
 import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
 import { getStorage } from "@/lib/storage-factory";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
@@ -11,6 +10,9 @@ import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pe
 import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
+import { callGenerateApi, executeGeneration, downloadOriginalImage } from "@/lib/api";
+import { resolveImageSrc } from "@/lib/format";
+import ImageLightbox, { type LightboxImage } from "@/components/ImageLightbox";
 
 function getCustomApiHeaders(): Record<string, string> {
   const s = loadSettings();

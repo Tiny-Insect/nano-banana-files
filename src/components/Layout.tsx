@@ -4,7 +4,6 @@ import { ImageIcon, Wand2, Settings, Eye, EyeOff, Check, Sun, Moon, Info } from 
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { toggleTheme, isDarkMode } from "@/App";
-import StarField from "@/components/StarField";
 
 const SETTINGS_KEY = "nanobanana_settings";
 

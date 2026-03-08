@@ -44,8 +44,13 @@ function saveTasks(tasks: GenerationTask[]) {
   try {
     const toSave = tasks.slice(-20).map((t) => ({
       ...t,
-      referenceImageBase64: [],
-      referenceImagePreviews: [],
+      // Keep Storage URLs (short), drop large base64 data URLs
+      referenceImageBase64: (t.referenceImageBase64 || []).map(img =>
+        img.startsWith("http") ? img : ""
+      ).filter(Boolean),
+      referenceImagePreviews: (t.referenceImagePreviews || []).map(img =>
+        img.startsWith("http") ? img : ""
+      ).filter(Boolean),
       generatedImages: t.generatedImages?.map((img) =>
         img.length > 50000 ? "" : img
       ) || [],

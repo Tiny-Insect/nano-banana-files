@@ -171,7 +171,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </div>
 
                   <div className="border-t border-border/30 pt-3">
-                    <p className="text-xs font-medium mb-2">下载设置</p>
+                    <p className="text-sm font-medium mb-2">下载设置</p>
                     <div className="space-y-2">
                       <div>
                         <label className="text-[11px] text-muted-foreground mb-1 block">文件名前缀</label>

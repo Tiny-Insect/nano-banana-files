@@ -316,9 +316,9 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
             };
             const adaptiveWidth = ratioWidths[task.aspectRatio] || 180;
             return task.generatedImages.map((img, i) => {
-            const src = img.startsWith("data:") || img.startsWith("http") ? img : `data:image/png;base64,${img}`;
+            const src = resolveImageSrc(img);
             const thumbSrc = task.thumbnails?.[i] || src;
-            const displaySrc = thumbSrc.startsWith("data:") || thumbSrc.startsWith("http") ? thumbSrc : `data:image/png;base64,${thumbSrc}`;
+            const displaySrc = resolveImageSrc(thumbSrc);
             return (
               <div
                 key={i}

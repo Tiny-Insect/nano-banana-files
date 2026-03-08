@@ -70,7 +70,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen flex flex-col relative z-[1]">
       <nav className="border-b border-border/50 bg-background/80 backdrop-blur-sm sticky top-0 z-50">
         <div className="max-w-5xl mx-auto px-4 flex items-center justify-between h-12">
-          <span className="text-sm font-semibold tracking-tight">LumenDust</span>
+          <span className="text-sm font-semibold tracking-[0.15em] select-none pointer-events-none" style={{ fontFamily: "'Cormorant SC', serif", fontSize: "15px", letterSpacing: "0.18em" }}>LUMENDUST</span>
           <div className="flex items-center gap-1">
             {navItems.map((item) => (
               <Link key={item.path} to={item.path}>

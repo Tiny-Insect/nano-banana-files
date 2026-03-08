@@ -3,7 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { useGenerationStore, createThumbnail, type ModelType, type GenerationTask } from "@/lib/generation-store";
+import { useGenerationStore, type ModelType, type GenerationTask } from "@/lib/generation-store";
+import { getStorage } from "@/lib/storage-factory";
 import { NANOBANANA2_RATIOS, NANOBANANA_PRO_RATIOS, RESOLUTIONS } from "@/lib/schema";
 import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pencil, RefreshCw, Trash2, ArrowDown, AlertTriangle, Info, Globe, Brain } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
@@ -28,9 +29,10 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
   if (data && data.error) return data;
   if (data && data.images) return data;
 
-  // Handle raw Gemini native response
+  const storage = getStorage();
   const images: string[] = [];
   const thumbnails: string[] = [];
+
   if (data?.candidates) {
     for (const candidate of data.candidates) {
       if (candidate?.finishReason === "SAFETY") {
@@ -43,43 +45,12 @@ async function callGenerateApi(body: Record<string, any>): Promise<any> {
             const mimeType = imgData.mimeType || imgData.mime_type || "image/png";
             const dataUrl = `data:${mimeType};base64,${imgData.data}`;
             try {
-              const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
               const blob = await fetch(dataUrl).then(r => r.blob());
-              const baseName = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
-
-              // Upload original
-              const { data: uploadData, error: uploadError } = await supabase.storage
-                .from('generated-images')
-                .upload(`${baseName}.${ext}`, blob, { contentType: mimeType });
-
-              if (!uploadError && uploadData) {
-                const { data: urlData } = supabase.storage
-                  .from('generated-images')
-                  .getPublicUrl(uploadData.path);
-                images.push(urlData.publicUrl);
-
-                // Create and upload thumbnail
-                try {
-                  const thumbBlob = await createThumbnail(blob, 280);
-                  const { data: thumbUpload, error: thumbErr } = await supabase.storage
-                    .from('generated-images')
-                    .upload(`thumb_${baseName}.jpg`, thumbBlob, { contentType: "image/jpeg" });
-                  if (!thumbErr && thumbUpload) {
-                    const { data: thumbUrl } = supabase.storage
-                      .from('generated-images')
-                      .getPublicUrl(thumbUpload.path);
-                    thumbnails.push(thumbUrl.publicUrl);
-                  } else {
-                    thumbnails.push(urlData.publicUrl); // fallback to original
-                  }
-                } catch {
-                  thumbnails.push(urlData.publicUrl);
-                }
-              } else {
-                images.push(dataUrl);
-                thumbnails.push(dataUrl);
-              }
+              const stored = await storage.saveGeneratedImage(blob, mimeType);
+              images.push(stored.originalUrl);
+              thumbnails.push(stored.thumbnailUrl);
             } catch {
+              // Fallback to data URL if storage fails
               images.push(dataUrl);
               thumbnails.push(dataUrl);
             }
@@ -275,18 +246,10 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
   const downloadImage = async (url: string, index: number) => {
     const s = loadSettings();
     const prefix = s.downloadPrefix || "LumenDust";
-    const fmt = s.downloadFormat || "png";
     try {
-      const resp = await fetch(url);
-      const blob = await resp.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = blobUrl;
-      a.download = `${prefix}-${Date.now()}-${index}.${fmt}`;
-      a.click();
-      URL.revokeObjectURL(blobUrl);
+      const storage = getStorage();
+      await storage.downloadImage(url, `${prefix}-${Date.now()}-${index}`);
     } catch {
-      // Fallback: open in new tab
       window.open(url, "_blank");
     }
   };
@@ -580,15 +543,8 @@ export default function Home() {
   }, [aspectRatio, setModel, setAspectRatio]);
 
   const uploadImageToStorage = useCallback(async (file: File): Promise<string> => {
-    const fileName = `${Date.now()}-${Math.random().toString(36).slice(2)}.${file.name.split('.').pop() || 'png'}`;
-    const { data, error } = await supabase.storage
-      .from('reference-images')
-      .upload(fileName, file, { contentType: file.type });
-    if (error) throw new Error(`上传失败: ${error.message}`);
-    const { data: urlData } = supabase.storage
-      .from('reference-images')
-      .getPublicUrl(data.path);
-    return urlData.publicUrl;
+    const storage = getStorage();
+    return storage.saveReferenceImage(file);
   }, []);
 
   const handleImageUpload = useCallback(async (e: React.ChangeEvent<HTMLInputElement>) => {

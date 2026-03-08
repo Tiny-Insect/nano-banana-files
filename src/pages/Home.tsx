@@ -673,17 +673,31 @@ export default function Home() {
     try {
       updateTask(taskId, { status: "creating", statusDetail: "正在提交请求..." });
       await new Promise((r) => setTimeout(r, 300));
-      updateTask(taskId, { status: "generating", statusDetail: "已发送至 API，等待模型响应..." });
 
-      const data = await callGenerateApi(bodyToSend);
+      const count = task.numImages || 1;
+      updateTask(taskId, { status: "generating", statusDetail: `正在生成 ${count} 张图片...` });
+
+      const promises = Array.from({ length: count }, () => callGenerateApi(bodyToSend));
+      const results = await Promise.allSettled(promises);
+
+      const allImages: string[] = [];
+      let lastError = "";
+      for (const r of results) {
+        if (r.status === "fulfilled" && r.value.images) {
+          allImages.push(...r.value.images);
+        } else if (r.status === "fulfilled" && r.value.error) {
+          lastError = r.value.error;
+        } else if (r.status === "rejected") {
+          lastError = r.reason?.message || "生成失败";
+        }
+      }
+
       updateTask(taskId, { status: "downloading", statusDetail: "正在接收图片数据..." });
 
-      if (data.error) {
-        updateTask(taskId, { status: "error", error: data.error, completedAt: Date.now() });
-      } else if (data.images && data.images.length > 0) {
-        updateTask(taskId, { status: "complete", generatedImages: data.images, completedAt: Date.now() });
+      if (allImages.length > 0) {
+        updateTask(taskId, { status: "complete", generatedImages: allImages, completedAt: Date.now() });
       } else {
-        updateTask(taskId, { status: "error", error: "未返回图片" });
+        updateTask(taskId, { status: "error", error: lastError || "未返回图片", completedAt: Date.now() });
       }
     } catch (error: any) {
       const msg = error.message || "";

@@ -374,8 +374,10 @@ export default function Assets() {
   const colWidth = Math.round(120 + (columnSize / 100) * 280);
 
   const handleDelete = (taskId: string) => {
+    const task = tasks.find((t) => t.id === taskId);
+    if (task) moveToTrash(task);
     setTasks((prev) => prev.filter((t) => t.id !== taskId));
-    toast({ title: "已删除" });
+    toast({ title: "已移至最近删除" });
   };
 
   const handleUsePrompt = (p: string) => {

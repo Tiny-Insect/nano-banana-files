@@ -16,7 +16,7 @@ const MODEL_MAP_CUSTOM: Record<string, string> = {
 
 // Model mapping for Lovable AI Gateway
 const MODEL_MAP_GATEWAY: Record<string, string> = {
-  "nanobanana-2": "google/gemini-2.5-flash-image",
+  "nanobanana-2": "google/gemini-3.1-flash-image-preview",
   "nanobanana-pro": "google/gemini-3-pro-image-preview",
 };
 

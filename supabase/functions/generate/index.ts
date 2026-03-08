@@ -131,26 +131,21 @@ serve(async (req) => {
       .replace(/\/v1\/?$/, "")
       .replace(/\/+$/, "");
 
-    const isGoogleNative = baseUrl.includes("generativelanguage.googleapis.com");
     const apiModel = MODEL_MAP[model] || model;
+    const imageSize = resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K";
 
-    // Build content parts
+    // Build content parts in OpenAI format
     const contentParts: any[] = [];
     if (prompt) {
-      contentParts.push({ text: prompt });
+      contentParts.push({ type: "text", text: prompt });
     }
     if (images && images.length > 0) {
       for (const img of images) {
-        const raw = img.startsWith("data:") ? img.split(",")[1] : img;
-        contentParts.push({
-          inlineData: {
-            mimeType: "image/png",
-            data: raw,
-          },
-        });
+        const prefix = img.startsWith("data:") ? img : `data:image/png;base64,${img}`;
+        contentParts.push({ type: "image_url", image_url: { url: prefix } });
       }
       if (!prompt) {
-        contentParts.unshift({ text: "Based on the reference image(s), generate a similar image." });
+        contentParts.unshift({ type: "text", text: "Based on the reference image(s), generate a similar image." });
       }
     }
     if (contentParts.length === 0) {
@@ -160,69 +155,48 @@ serve(async (req) => {
       );
     }
 
+    // Determine endpoint and auth
     let chatUrl: string;
-    let requestBody: Record<string, any>;
     let headers: Record<string, string>;
+    const isGoogle = baseUrl.includes("generativelanguage.googleapis.com");
 
-    if (isGoogleNative) {
-      // Google Gemini native API format
-      chatUrl = `${baseUrl}/v1beta/models/${apiModel}:generateContent`;
-
-      requestBody = {
-        contents: [{ parts: contentParts }],
-        generationConfig: {
-          responseModalities: ["TEXT", "IMAGE"],
-        },
-      };
-
-      // Add image config for aspect ratio
-      if (aspect_ratio) {
-        (requestBody as any).generationConfig.imageConfig = {
-          aspectRatio: aspect_ratio,
-        };
-      }
-
+    if (isGoogle) {
+      // Google's OpenAI-compatible endpoint
+      chatUrl = `${baseUrl}/v1beta/openai/chat/completions`;
       headers = {
         "Content-Type": "application/json",
-        "x-goog-api-key": apiKey,
+        "Authorization": `Bearer ${apiKey}`,
       };
     } else {
-      // OpenAI-compatible format (third-party proxies)
+      // Third-party proxy
       chatUrl = `${baseUrl}/v1/chat/completions`;
+      headers = {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      };
+    }
 
-      // Convert content parts to OpenAI format
-      const openaiParts: any[] = [];
-      for (const part of contentParts) {
-        if (part.text) {
-          openaiParts.push({ type: "text", text: part.text });
-        } else if (part.inlineData) {
-          openaiParts.push({
-            type: "image_url",
-            image_url: { url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` },
-          });
-        }
-      }
-
-      requestBody = {
-        model: apiModel,
-        messages: [{ role: "user", content: openaiParts }],
-        modalities: ["text", "image"],
-        n: num_images || 1,
-        image_config: {
-          image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
+    // Build request body - same OpenAI-compatible format for all
+    const requestBody: Record<string, any> = {
+      model: apiModel,
+      messages: [{ role: "user", content: contentParts }],
+      modalities: ["text", "image"],
+      n: num_images || 1,
+      image_config: {
+        image_size: imageSize,
+        aspect_ratio: aspect_ratio,
+      },
+      generation_config: {
+        response_modalities: ["Text", "Image"],
+        image_generation_config: {
+          image_size: imageSize,
           aspect_ratio: aspect_ratio,
         },
-        generation_config: {
-          response_modalities: ["Text", "Image"],
-          image_generation_config: {
-            image_size: resolution === "4k" ? "4K" : resolution === "2k" ? "2K" : "1K",
-            aspect_ratio: aspect_ratio,
-          },
-        },
-      };
+      },
+    };
 
-      if (web_search) requestBody.web_search = true;
-      if (thinking_level) requestBody.thinking_level = thinking_level;
+    if (web_search) requestBody.web_search = true;
+    if (thinking_level) requestBody.thinking_level = thinking_level;
 
       headers = {
         "Content-Type": "application/json",

@@ -308,19 +308,17 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
         </div>
       ) : (
         <div className="flex flex-wrap gap-3">
-          {task.generatedImages.map((img, i) => {
+          {(() => {
+            const ratioWidths: Record<string, number> = {
+              "1:1": 180, "4:3": 200, "3:2": 210, "16:9": 260, "21:9": 320,
+              "3:4": 150, "2:3": 140, "9:16": 120,
+            };
+            const adaptiveWidth = ratioWidths[task.aspectRatio] || 180;
+            return task.generatedImages.map((img, i) => {
             const src = img.startsWith("data:") || img.startsWith("http") ? img : `data:image/png;base64,${img}`;
             const thumbSrc = task.thumbnails?.[i] || src;
             const displaySrc = thumbSrc.startsWith("data:") || thumbSrc.startsWith("http") ? thumbSrc : `data:image/png;base64,${thumbSrc}`;
             return (
-              {(() => {
-                // Adaptive width based on aspect ratio
-                const ratioMap: Record<string, number> = {
-                  "1:1": 180, "4:3": 200, "3:2": 210, "16:9": 260, "21:9": 320,
-                  "3:4": 150, "2:3": 140, "9:16": 120,
-                };
-                const adaptiveWidth = ratioMap[task.aspectRatio] || 180;
-                return (
               <div
                 key={i}
                 className="group/img relative rounded-lg overflow-hidden bg-card/50 border border-border/20 hover:border-primary/30 transition-all duration-300"

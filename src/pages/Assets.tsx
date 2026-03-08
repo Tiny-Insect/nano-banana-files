@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import { Download, Trash2, ImageIcon, X, Copy, Pencil, RefreshCw, MapPin, ZoomIn, ZoomOut, AlertTriangle, ClipboardCopy } from "lucide-react";
+import { moveToTrash } from "@/lib/trash-store";
 import Layout, { loadSettings } from "@/components/Layout";
 import { useGenerationStore, type GenerationTask, type ModelType } from "@/lib/generation-store";
 import { getStorage } from "@/lib/storage-factory";

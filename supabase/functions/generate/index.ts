@@ -6,35 +6,26 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-custom-api-url, x-custom-api-key",
 };
 
-const LOVABLE_AI_GATEWAY = "https://ai.gateway.lovable.dev/v1/chat/completions";
-
-// Model mapping for custom API endpoints (non-gateway)
-const MODEL_MAP_CUSTOM: Record<string, string> = {
+const MODEL_MAP: Record<string, string> = {
   "nanobanana-2": "gemini-3.1-flash-image-preview",
   "nanobanana-pro": "gemini-3-pro-image-preview",
-};
-
-// Model mapping for Lovable AI Gateway
-const MODEL_MAP_GATEWAY: Record<string, string> = {
-  "nanobanana-2": "google/gemini-3.1-flash-image-preview",
-  "nanobanana-pro": "google/gemini-3-pro-image-preview",
 };
 
 function extractImagesFromResponse(data: any): string[] {
   const images: string[] = [];
 
-  // Official Gemini format
+  // Official Gemini native format
   if (data.candidates && Array.isArray(data.candidates)) {
     for (const candidate of data.candidates) {
       if (candidate.content && Array.isArray(candidate.content.parts)) {
         for (const part of candidate.content.parts) {
-          if (part.inline_data && part.inline_data.data) {
-            images.push(
-              `data:${part.inline_data.mime_type || "image/png"};base64,${part.inline_data.data}`
-            );
-          } else if (part.inlineData && part.inlineData.data) {
+          if (part.inlineData && part.inlineData.data) {
             images.push(
               `data:${part.inlineData.mimeType || "image/png"};base64,${part.inlineData.data}`
+            );
+          } else if (part.inline_data && part.inline_data.data) {
+            images.push(
+              `data:${part.inline_data.mime_type || "image/png"};base64,${part.inline_data.data}`
             );
           }
         }
@@ -42,7 +33,7 @@ function extractImagesFromResponse(data: any): string[] {
     }
   }
 
-  // OpenAI format
+  // OpenAI-compatible format (for third-party proxies)
   if (data.choices && Array.isArray(data.choices)) {
     for (const choice of data.choices) {
       const msg = choice.message;
@@ -117,90 +108,49 @@ serve(async (req) => {
       thinking_level,
     } = body;
 
-    const customApiUrl = req.headers.get("x-custom-api-url");
-    const customApiKey = req.headers.get("x-custom-api-key");
+    // Frontend can override API URL/Key via headers
+    const customApiUrl = req.headers.get("x-custom-api-url")?.trim();
+    const customApiKey = req.headers.get("x-custom-api-key")?.trim();
 
-    // Determine if using custom API or Lovable AI Gateway
-    // Only use custom mode when frontend explicitly provides custom URL via headers
-    const useCustom = !!(customApiUrl?.trim());
-    let chatUrl: string;
-    let apiKey: string;
-    let apiModel: string;
+    // Resolve API URL: frontend header > env secret
+    const rawUrl = customApiUrl || Deno.env.get("NANOBANANA_API_URL") || "";
+    const apiKey = customApiKey || Deno.env.get("NANOBANANA_API_KEY") || "";
 
-    if (useCustom) {
-      // Custom API mode
-      let rawUrl = Deno.env.get("NANOBANANA_API_URL") || "";
-      if (customApiUrl && customApiUrl.trim()) {
-        try {
-          const parsed = new URL(customApiUrl.trim());
-          if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
-            return new Response(
-              JSON.stringify({ error: "API URL 必须以 http:// 或 https:// 开头" }),
-              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-            );
-          }
-          rawUrl = customApiUrl.trim();
-        } catch {
-          return new Response(
-            JSON.stringify({ error: "自定义 API URL 格式无效" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-      }
-
-      const baseUrl = rawUrl
-        .replace(/\/v1beta\/openai\/chat\/completions\/?$/, "")
-        .replace(/\/v1\/chat\/completions\/?$/, "")
-        .replace(/\/v1\/images\/generations\/?$/, "")
-        .replace(/\/v1\/?$/, "")
-        .replace(/\/+$/, "");
-
-      apiKey = (customApiKey && customApiKey.trim()) || Deno.env.get("NANOBANANA_API_KEY") || "";
-
-      if (!baseUrl || !apiKey) {
-        return new Response(
-          JSON.stringify({ error: "请先在右上角「设置」中填写 API URL 和 API Key" }),
-          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-
-      // Detect Google AI Studio and use correct path
-      if (baseUrl.includes("generativelanguage.googleapis.com")) {
-        chatUrl = `${baseUrl}/v1beta/openai/chat/completions`;
-      } else {
-        chatUrl = `${baseUrl}/v1/chat/completions`;
-      }
-
-      apiModel = MODEL_MAP_CUSTOM[model] || model;
-    } else {
-      // Lovable AI Gateway mode (default)
-      const lovableKey = Deno.env.get("LOVABLE_API_KEY");
-      if (!lovableKey) {
-        return new Response(
-          JSON.stringify({ error: "LOVABLE_API_KEY 未配置，请启用 Lovable Cloud" }),
-          { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
-      chatUrl = LOVABLE_AI_GATEWAY;
-      apiKey = lovableKey;
-      apiModel = MODEL_MAP_GATEWAY[model] || model;
+    if (!rawUrl || !apiKey) {
+      return new Response(
+        JSON.stringify({ error: "请先在右上角「设置」中填写 API URL 和 API Key，或在 Cloud Secrets 中配置 NANOBANANA_API_URL 和 NANOBANANA_API_KEY" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    // Clean base URL
+    const baseUrl = rawUrl
+      .replace(/\/v1beta\/models\/.*$/, "")
+      .replace(/\/v1beta\/openai\/chat\/completions\/?$/, "")
+      .replace(/\/v1\/chat\/completions\/?$/, "")
+      .replace(/\/v1\/?$/, "")
+      .replace(/\/+$/, "");
+
+    const isGoogleNative = baseUrl.includes("generativelanguage.googleapis.com");
+    const apiModel = MODEL_MAP[model] || model;
 
     // Build content parts
     const contentParts: any[] = [];
     if (prompt) {
-      contentParts.push({ type: "text", text: prompt });
+      contentParts.push({ text: prompt });
     }
     if (images && images.length > 0) {
       for (const img of images) {
-        const prefix = img.startsWith("data:") ? img : `data:image/png;base64,${img}`;
-        contentParts.push({ type: "image_url", image_url: { url: prefix } });
+        const raw = img.startsWith("data:") ? img.split(",")[1] : img;
+        contentParts.push({
+          inlineData: {
+            mimeType: "image/png",
+            data: raw,
+          },
+        });
       }
       if (!prompt) {
-        contentParts.unshift({
-          type: "text",
-          text: "Based on the reference image(s), generate a similar image.",
-        });
+        contentParts.unshift({ text: "Based on the reference image(s), generate a similar image." });
       }
     }
     if (contentParts.length === 0) {
@@ -210,13 +160,50 @@ serve(async (req) => {
       );
     }
 
+    let chatUrl: string;
     let requestBody: Record<string, any>;
+    let headers: Record<string, string>;
 
-    if (useCustom) {
-      // Custom API: include all compatibility fields
+    if (isGoogleNative) {
+      // Google Gemini native API format
+      chatUrl = `${baseUrl}/v1beta/models/${apiModel}:generateContent`;
+
+      requestBody = {
+        contents: [{ parts: contentParts }],
+        generationConfig: {
+          responseModalities: ["TEXT", "IMAGE"],
+          ...(aspect_ratio ? {
+            imageGenerationConfig: {
+              aspectRatio: aspect_ratio,
+            },
+          } : {}),
+        },
+      };
+
+      headers = {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      };
+    } else {
+      // OpenAI-compatible format (third-party proxies)
+      chatUrl = `${baseUrl}/v1/chat/completions`;
+
+      // Convert content parts to OpenAI format
+      const openaiParts: any[] = [];
+      for (const part of contentParts) {
+        if (part.text) {
+          openaiParts.push({ type: "text", text: part.text });
+        } else if (part.inlineData) {
+          openaiParts.push({
+            type: "image_url",
+            image_url: { url: `data:${part.inlineData.mimeType};base64,${part.inlineData.data}` },
+          });
+        }
+      }
+
       requestBody = {
         model: apiModel,
-        messages: [{ role: "user", content: contentParts }],
+        messages: [{ role: "user", content: openaiParts }],
         modalities: ["text", "image"],
         n: num_images || 1,
         image_config: {
@@ -231,25 +218,21 @@ serve(async (req) => {
           },
         },
       };
+
       if (web_search) requestBody.web_search = true;
       if (thinking_level) requestBody.thinking_level = thinking_level;
-    } else {
-      // Lovable AI Gateway: clean OpenAI-compatible format only
-      requestBody = {
-        model: apiModel,
-        messages: [{ role: "user", content: contentParts }],
-        n: num_images || 1,
+
+      headers = {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       };
     }
 
-    console.log("useCustom:", useCustom, "chatUrl:", chatUrl, "model:", apiModel);
+    console.log("Request:", chatUrl, "model:", apiModel, "isGoogleNative:", isGoogleNative);
 
     const response = await fetch(chatUrl, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify(requestBody),
     });
 
@@ -275,7 +258,7 @@ serve(async (req) => {
     const data = await response.json();
     console.log("API response received, extracting images...");
 
-    // Safety filter check
+    // Safety filter check (Google native)
     if (data.candidates && data.candidates[0]?.finishReason === "SAFETY") {
       return new Response(
         JSON.stringify({ error: "请求被安全过滤器拦截，请尝试修改提示词" }),

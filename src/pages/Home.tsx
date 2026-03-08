@@ -893,7 +893,7 @@ export default function Home() {
                   </Select>
 
                   <Select value={String(numImages)} onValueChange={(v) => setNumImages(Number(v))}>
-                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-xs px-2 py-1 gap-1 text-muted-foreground">
+                    <SelectTrigger className="h-auto w-auto border-0 bg-transparent text-sm px-2.5 py-1.5 gap-1 text-muted-foreground">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>

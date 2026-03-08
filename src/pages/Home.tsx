@@ -761,9 +761,9 @@ export default function Home() {
         )}
 
         <div
-          className="fixed bottom-0 left-0 right-0 px-4 pb-4 z-30"
+          className="fixed bottom-0 left-0 right-0 px-6 pb-5 z-30"
         >
-          <div className="max-w-3xl mx-auto">
+          <div className="max-w-4xl mx-auto">
           <div 
             className="rounded-2xl border border-border/40 bg-card/70 backdrop-blur-xl shadow-xl"
           >

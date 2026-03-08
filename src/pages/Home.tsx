@@ -166,7 +166,9 @@ function ModelToggle({ model, onChange, onColorProgress }: { model: string; onCh
       const btnRect = activeRef.current.getBoundingClientRect();
       setSlider({ left: btnRect.left - containerRect.left, width: btnRect.width });
     }
-    setColorProgress(isPro ? 1 : 0);
+    const initVal = isPro ? 1 : 0;
+    setColorProgress(initVal);
+    onColorProgress?.(initVal);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

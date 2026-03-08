@@ -9,7 +9,7 @@
 
 import type { StorageAdapter } from "./storage-adapter";
 import { WebStorage } from "./storage-web";
-// import { DesktopStorage } from "./storage-desktop";
+import { DesktopStorage } from "./storage-desktop";
 
 /** Detect if running inside Electron */
 function isElectron(): boolean {

@@ -855,7 +855,7 @@ export default function Home() {
 
                   <Popover open={ratioOpen} onOpenChange={setRatioOpen}>
                     <PopoverTrigger asChild>
-                      <button className="flex items-center gap-1.5 px-2 py-1 rounded text-xs text-muted-foreground transition-colors hover:text-foreground">
+                      <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-md text-sm text-muted-foreground transition-colors hover:text-foreground">
                         <RatioIcon ratio={aspectRatio} active={false} />
                         {aspectRatio}
                         <ChevronDown className="w-3 h-3 opacity-50" />

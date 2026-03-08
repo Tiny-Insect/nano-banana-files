@@ -901,7 +901,7 @@ export default function Home() {
         )}
 
         <div
-          className="fixed bottom-0 left-0 right-0 px-6 pb-5 z-30"
+          className="fixed bottom-0 left-0 right-0 px-3 sm:px-6 pb-3 sm:pb-5 z-30"
         >
           <div className="max-w-3xl mx-auto">
           <TooltipProvider delayDuration={300}>

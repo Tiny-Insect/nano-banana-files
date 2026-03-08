@@ -485,7 +485,7 @@ export default function Home() {
       num_images: numImages,
       web_search: !!webSearch,
       thinking_level: thinkingLevel || "fast",
-      images: task.referenceImageBase64.length > 0 ? task.referenceImageBase64 : [],
+      image_urls: task.referenceImageBase64.length > 0 ? task.referenceImageBase64 : [],
     };
 
     try {

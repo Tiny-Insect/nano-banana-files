@@ -512,7 +512,7 @@ export default function Home() {
     visibleCount, loadMore, hasMore, clearOldTasks,
   } = store;
 
-  const [isAtBottom, setIsAtBottom] = useState(true);
+  const [isAtBottom, _setIsAtBottom] = useState(true);
   const [deleteConfirmTask, setDeleteConfirmTask] = useState<GenerationTask | null>(null);
   const [flyingImage, setFlyingImage] = useState<{ src: string; x: number; y: number } | null>(null);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -555,48 +555,21 @@ export default function Home() {
     }
   }, [searchParams, setSearchParams]);
 
+  // Auto-scroll to bottom on initial load only
   useEffect(() => {
     requestAnimationFrame(() => {
       feedEndRef.current?.scrollIntoView();
     });
   }, []);
 
+  // Auto-scroll when new tasks are added
   useEffect(() => {
     const newCount = tasks.length;
-    const lastTask = tasks.length > 0 ? tasks[tasks.length - 1] : null;
-    const lastTaskKey = lastTask ? `${lastTask.id}-${lastTask.status}-${lastTask.generatedImages.length}` : null;
-
     if (newCount > prevTaskCountRef.current) {
-      feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
-    } else if (isAtBottomRef.current && lastTaskKey !== prevLastTaskRef.current && newCount === prevTaskCountRef.current) {
       feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
     }
     prevTaskCountRef.current = newCount;
-    prevLastTaskRef.current = lastTaskKey;
   }, [tasks]);
-
-  useEffect(() => {
-    const el = feedRef.current;
-    if (!el) return;
-    let scrollTimer: ReturnType<typeof setTimeout> | null = null;
-    const onScroll = () => {
-      if (scrollTimer) clearTimeout(scrollTimer);
-      scrollTimer = setTimeout(() => {
-        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 80;
-        isAtBottomRef.current = atBottom;
-        setIsAtBottom(atBottom);
-      }, 50);
-    };
-    el.addEventListener("scroll", onScroll, { passive: true });
-    return () => {
-      el.removeEventListener("scroll", onScroll);
-      if (scrollTimer) clearTimeout(scrollTimer);
-    };
-  }, []);
-
-  const scrollToBottom = useCallback(() => {
-    feedEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, []);
 
   const [ratioOpen, setRatioOpen] = useState(false);
 
@@ -971,17 +944,6 @@ export default function Home() {
           )}
         </div>
 
-        {!isAtBottom && tasks.length > 0 && (
-          <div className="absolute bottom-56 left-0 right-0 flex justify-center z-20 animate-in fade-in slide-in-from-bottom-2 duration-200">
-            <button
-              onClick={scrollToBottom}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/90 text-primary-foreground text-xs font-medium shadow-lg hover:bg-primary transition-colors"
-            >
-              <ArrowDown className="w-3 h-3" />
-              回到底部
-            </button>
-          </div>
-        )}
 
         <div
           className="fixed bottom-0 left-0 right-0 px-3 sm:px-6 pb-3 sm:pb-5 z-30"
@@ -1225,7 +1187,7 @@ export default function Home() {
                   setTasks((prev) => prev.filter((t) => t.status !== "error"));
                   toast({ title: "已删除所有失败任务" });
                 }}
-                className="fixed bottom-6 right-6 z-20 w-10 h-10 rounded-full bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110"
+                className="fixed bottom-6 right-6 z-40 w-10 h-10 rounded-full bg-destructive/10 hover:bg-destructive/20 border border-destructive/20 flex items-center justify-center text-destructive/60 hover:text-destructive transition-all duration-200 shadow-lg hover:shadow-xl hover:scale-110"
               >
                 <AlertTriangle className="w-4 h-4" />
               </button>

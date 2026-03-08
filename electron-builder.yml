@@ -9,8 +9,12 @@ nsis:
   createDesktopShortcut: true
   createStartMenuShortcut: true
 win:
-  target: nsis
+  target:
+    - nsis
+    - portable
   icon: public/icon.png
+portable:
+  artifactName: LumenDust-Portable.exe
 files:
   - dist/**/*
   - electron/**/*

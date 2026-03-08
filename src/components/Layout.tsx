@@ -97,6 +97,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </button>
 
             <Popover>
+              <PopoverTrigger asChild>
                 <button
                   className="flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-colors text-muted-foreground hover:text-foreground"
                 >

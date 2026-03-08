@@ -910,7 +910,7 @@ export default function Home() {
             style={isPro ? { borderColor: "hsl(var(--pro-accent) / 0.15)" } : undefined}
           >
               <>
-                <div className="flex items-start gap-3 p-5 pb-3">
+                <div className="flex items-start gap-2 sm:gap-3 p-3 sm:p-5 pb-2 sm:pb-3">
                   <input
                     ref={fileInputRef}
                     type="file"

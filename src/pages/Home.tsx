@@ -348,7 +348,7 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                         size="icon"
                         variant="secondary"
                         className="w-7 h-7"
-                        onClick={(e) => { e.stopPropagation(); downloadImage(src, i); }}
+                        onClick={(e) => { e.stopPropagation(); handleDownloadImage(src, i); }}
                       >
                         <Download className="w-3 h-3" />
                       </Button>

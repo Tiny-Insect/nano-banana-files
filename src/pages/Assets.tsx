@@ -356,7 +356,8 @@ export default function Assets() {
   const navigate = useNavigate();
   const { tasks, setTasks, addTask, updateTask, setPrompt, setModel, setAspectRatio, setResolution, setNumImages, setReferenceImages, setReferenceImagePreviews, webSearch, thinkingLevel } = useGenerationStore();
   const [selectedImage, setSelectedImage] = useState<AssetImage | null>(null);
-  const [columnSize, setColumnSize] = useState(50); // 0-100 slider
+  const [columnSize, setColumnSize] = useState(50);
+  const [deleteConfirmTaskId, setDeleteConfirmTaskId] = useState<string | null>(null);
 
   // Flatten completed tasks into images
   const images: AssetImage[] = useMemo(() => {

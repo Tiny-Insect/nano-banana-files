@@ -399,6 +399,8 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
         <div className="flex flex-wrap gap-3">
           {task.generatedImages.map((img, i) => {
             const src = img.startsWith("data:") || img.startsWith("http") ? img : `data:image/png;base64,${img}`;
+            const thumbSrc = task.thumbnails?.[i] || src;
+            const displaySrc = thumbSrc.startsWith("data:") || thumbSrc.startsWith("http") ? thumbSrc : `data:image/png;base64,${thumbSrc}`;
             return (
               <div
                 key={i}
@@ -408,8 +410,9 @@ function TaskCard({ task, onUsePrompt, onUseRefImage, onClickImage, onReEdit, on
                 onMouseLeave={(e) => { e.currentTarget.style.boxShadow = "0 0 0 0 transparent"; }}
               >
                 <img
-                  src={src}
+                  src={displaySrc}
                   alt={`生成 ${i + 1}`}
+                  loading="lazy"
                   className="w-full h-auto cursor-pointer transition-transform duration-300 ease-out group-hover/img:scale-[1.04]"
                   onClick={() => onClickImage(src)}
                 />

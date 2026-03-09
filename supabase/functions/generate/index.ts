@@ -82,14 +82,27 @@ serve(async (req) => {
       // Build native Gemini content parts
       const parts: any[] = [];
       if (prompt) parts.push({ text: prompt });
-      // Use fileUri for URL-based images (no memory overhead)
+      // Google API fileUri only supports gs:// or Files API URIs.
+      // For HTTP URLs (e.g. Supabase Storage), fetch and inline as base64.
       if (refImageUrls.length > 0) {
         for (const url of refImageUrls) {
-          parts.push({ fileData: { mimeType: "image/jpeg", fileUri: url } });
+          try {
+            const imgResp = await fetch(url);
+            if (!imgResp.ok) throw new Error(`Failed to fetch ref image: ${imgResp.status}`);
+            const buf = await imgResp.arrayBuffer();
+            const bytes = new Uint8Array(buf);
+            let binary = "";
+            for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+            const b64 = btoa(binary);
+            const ct = imgResp.headers.get("content-type") || "image/jpeg";
+            parts.push({ inlineData: { mimeType: ct, data: b64 } });
+          } catch (e) {
+            console.warn("Failed to fetch ref image URL for Google API:", url, e);
+          }
         }
         if (!prompt) parts.unshift({ text: "Based on the reference image(s), generate a similar image." });
       }
-      // Legacy: base64 inline (small images only)
+      // Base64 images sent directly from client
       if (refImageBase64.length > 0) {
         for (const img of refImageBase64) {
           const raw = img.startsWith("data:") ? img.split(",")[1] : img;

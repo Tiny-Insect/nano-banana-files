@@ -10,7 +10,7 @@ import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pe
 import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
-import { executeGeneration, downloadOriginalImage } from "@/lib/api";
+import { executeGeneration, downloadOriginalImage, prepareImageUrls } from "@/lib/api";
 import { resolveImageSrc } from "@/lib/format";
 import { triggerDownloadNotification } from "@/components/DownloadNotification";
 import ImageLightbox from "@/components/ImageLightbox";
@@ -611,8 +611,14 @@ export default function Home() {
       num_images: numImages,
       web_search: !!webSearch,
       thinking_level: thinkingLevel || "fast",
-      image_urls: task.referenceImageBase64.length > 0 ? task.referenceImageBase64 : [],
     };
+
+    // Convert local-file:// URLs to base64 before sending
+    if (task.referenceImageBase64.length > 0) {
+      const { image_urls, images } = await prepareImageUrls(task.referenceImageBase64);
+      if (image_urls.length > 0) bodyToSend.image_urls = image_urls;
+      if (images.length > 0) bodyToSend.images = images;
+    }
 
     try {
       await executeGeneration(taskId, bodyToSend, numImages || 1, updateTask);
@@ -710,8 +716,14 @@ export default function Home() {
       num_images: task.numImages,
       web_search: !!reWebSearch,
       thinking_level: reThinkingLevel || "fast",
-      image_urls: refBase64,
     };
+
+    // Convert local-file:// URLs to base64 before sending
+    if (refBase64.length > 0) {
+      const { image_urls, images } = await prepareImageUrls(refBase64);
+      if (image_urls.length > 0) bodyToSend.image_urls = image_urls;
+      if (images.length > 0) bodyToSend.images = images;
+    }
 
     try {
       await executeGeneration(taskId, bodyToSend, task.numImages || 1, updateTask);

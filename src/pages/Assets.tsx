@@ -139,8 +139,14 @@ export default function Assets() {
       num_images: task.numImages,
       web_search: !!reWebSearch,
       thinking_level: reThinkingLevel || "fast",
-      image_urls: refBase64,
     };
+
+    // Convert local-file:// URLs to base64 before sending
+    if (refBase64.length > 0) {
+      const { image_urls, images } = await (await import("@/lib/api")).prepareImageUrls(refBase64);
+      if (image_urls.length > 0) bodyToSend.image_urls = image_urls;
+      if (images.length > 0) bodyToSend.images = images;
+    }
 
     try {
       await executeGeneration(taskId, bodyToSend, task.numImages || 1, updateTask);

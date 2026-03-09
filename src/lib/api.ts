@@ -8,6 +8,42 @@ import { loadSettings } from "@/components/Layout";
 import { getStorage } from "@/lib/storage-factory";
 import type { GenerationTask } from "@/lib/generation-store";
 
+/**
+ * Separate image URLs into remote URLs (usable by API) and base64 data.
+ * local-file:// URLs are read via Electron IPC and converted to base64.
+ */
+export async function prepareImageUrls(urls: string[]): Promise<{ image_urls: string[]; images: string[] }> {
+  const image_urls: string[] = [];
+  const images: string[] = [];
+  const electronAPI = (window as any).electronAPI;
+
+  for (const url of urls) {
+    if (url.startsWith("local-file://")) {
+      // Read local file and convert to base64
+      try {
+        const parsed = new URL(url);
+        let localPath = decodeURIComponent(parsed.pathname);
+        if (localPath.startsWith("/")) localPath = localPath.slice(1);
+        if (electronAPI?.fsReadFile) {
+          const base64 = await electronAPI.fsReadFile(localPath);
+          images.push(base64);
+        }
+      } catch (e) {
+        console.warn("Failed to read local-file for API:", url, e);
+      }
+    } else if (url.startsWith("http")) {
+      image_urls.push(url);
+    } else if (url.startsWith("data:")) {
+      const raw = url.split(",")[1];
+      if (raw) images.push(raw);
+    } else {
+      // Treat as raw base64
+      images.push(url);
+    }
+  }
+  return { image_urls, images };
+}
+
 export function getCustomApiHeaders(): Record<string, string> {
   const s = loadSettings();
   const headers: Record<string, string> = {};

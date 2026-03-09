@@ -10,7 +10,7 @@ import { X, Loader2, Download, ImageIcon, Zap, Plus, Send, ChevronDown, Copy, Pe
 import { moveToTrash } from "@/lib/trash-store";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import Layout, { loadSettings } from "@/components/Layout";
-import { executeGeneration, downloadOriginalImage } from "@/lib/api";
+import { executeGeneration, downloadOriginalImage, prepareImageUrls } from "@/lib/api";
 import { resolveImageSrc } from "@/lib/format";
 import { triggerDownloadNotification } from "@/components/DownloadNotification";
 import ImageLightbox from "@/components/ImageLightbox";

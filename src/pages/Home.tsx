@@ -611,8 +611,14 @@ export default function Home() {
       num_images: numImages,
       web_search: !!webSearch,
       thinking_level: thinkingLevel || "fast",
-      image_urls: task.referenceImageBase64.length > 0 ? task.referenceImageBase64 : [],
     };
+
+    // Convert local-file:// URLs to base64 before sending
+    if (task.referenceImageBase64.length > 0) {
+      const { image_urls, images } = await prepareImageUrls(task.referenceImageBase64);
+      if (image_urls.length > 0) bodyToSend.image_urls = image_urls;
+      if (images.length > 0) bodyToSend.images = images;
+    }
 
     try {
       await executeGeneration(taskId, bodyToSend, numImages || 1, updateTask);

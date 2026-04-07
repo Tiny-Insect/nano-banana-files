@@ -97,6 +97,10 @@ export default function AssistantSidebar({ snapshot, onApplySuggestion, onWriteP
           appendMessage(activeSession.id, { role: "system", content: "已停止本次回复" });
           return;
         }
+        if (intent === "chat") {
+          appendMessage(activeSession.id, { role: "assistant", content: `对话暂时不可用：${formatAssistantErrorMessage(error)}` });
+          return;
+        }
         if (action !== "suggest_only") {
           const applyResult = await onApplySuggestion(userText, action);
           reply += `\n\n${applyResult}`;

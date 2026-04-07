@@ -4,9 +4,12 @@
  */
 
 import { supabase, hasSupabaseConfig } from "@/integrations/supabase/client";
-import { loadSettings } from "@/components/Layout";
 import { getStorage } from "@/lib/storage-factory";
+import { loadSettings } from "@/components/Layout";
 import type { GenerationTask } from "@/lib/generation-store";
+
+const appLog = (message: string) => (window as any).electronAPI?.log?.(message).catch?.(() => {});
+
 
 /**
  * Separate image URLs into remote URLs (usable by API) and base64 data.
@@ -232,8 +235,11 @@ export async function testImageApiConnection(settings = loadSettings()): Promise
 
 export async function callGenerateApi(body: Record<string, any>): Promise<any> {
   const settings = loadSettings();
+  appLog(`callGenerateApi start model=${body.model} ratio=${body.aspect_ratio || ""} resolution=${body.resolution || ""} refs=${(body.image_urls?.length || 0) + (body.images?.length || 0)}`);
   if (!supabase || !hasSupabaseConfig) {
-    return callDirectImageApi(body, settings);
+    const result = await callDirectImageApi(body, settings);
+    appLog(`callGenerateApi direct response keys=${Object.keys(result || {}).join(",")}`);
+    return result;
   }
   const customHeaders = getCustomApiHeaders(settings);
   const { data, error } = await supabase.functions.invoke("generate", {
@@ -323,7 +329,11 @@ export async function callGenerateApi(body: Record<string, any>): Promise<any> {
     }
   }
 
-  if (images.length > 0) return { images, thumbnails };
+  if (images.length > 0) {
+    appLog(`callGenerateApi parsed images=${images.length}`);
+    return { images, thumbnails };
+  }
+  appLog(`callGenerateApi unsupported response shape=${JSON.stringify(Object.keys(data || {}))}`);
   return { error: "未返回图片", raw: data };
 }
 

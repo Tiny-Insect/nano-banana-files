@@ -62,9 +62,73 @@ export function getCustomApiHeaders(settings = loadSettings()): Record<string, s
   return headers;
 }
 
+async function callDirectImageApi(body: Record<string, any>, settings = loadSettings()): Promise<any> {
+  const rawUrl = settings.customApiUrl.trim();
+  const apiKey = settings.customApiKey.trim();
+  if (!rawUrl || !apiKey) {
+    throw new Error("请先填写图片 API URL 和 Key");
+  }
+
+  const baseUrl = rawUrl
+    .replace(/\/v1beta\/models\/.*$/, "")
+    .replace(/\/v1beta\/openai\/chat\/completions\/?$/, "")
+    .replace(/\/v1\/chat\/completions\/?$/, "")
+    .replace(/\/v1\/?$/, "")
+    .replace(/\/+$/, "");
+
+  const modelMap: Record<string, string> = {
+    "nanobanana-2": "gemini-3.1-flash-image-preview",
+    "nanobanana-pro": "gemini-3-pro-image-preview",
+  };
+  const apiModel = modelMap[body.model] || body.model;
+  const isGoogle = baseUrl.includes("generativelanguage.googleapis.com") || baseUrl.includes("googleapis.com") || rawUrl.includes(":generateContent");
+
+  if (isGoogle) {
+    const parts: any[] = [];
+    if (body.prompt) parts.push({ text: body.prompt });
+    for (const url of body.image_urls || []) {
+      const imgResp = await fetch(url);
+      const buf = await imgResp.arrayBuffer();
+      const bytes = new Uint8Array(buf);
+      let binary = "";
+      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+      const b64 = btoa(binary);
+      const ct = imgResp.headers.get("content-type") || "image/jpeg";
+      parts.push({ inlineData: { mimeType: ct, data: b64 } });
+    }
+    for (const img of body.images || []) {
+      const raw = img.startsWith("data:") ? img.split(",")[1] : img;
+      parts.push({ inlineData: { mimeType: "image/png", data: raw } });
+    }
+    const response = await fetch(`${baseUrl}/v1beta/models/${apiModel}:generateContent`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+      body: JSON.stringify({ contents: [{ parts }] }),
+    });
+    if (!response.ok) throw new Error(await response.text());
+    return response.json();
+  }
+
+  const response = await fetch(`${baseUrl}/v1/chat/completions`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
+    body: JSON.stringify({
+      model: apiModel,
+      messages: [{ role: "user", content: body.prompt || "Generate image" }],
+      stream: false,
+    }),
+  });
+  if (!response.ok) throw new Error(await response.text());
+  return response.json();
+}
+
 export async function testImageApiConnection(settings = loadSettings()): Promise<{ ok: true; message: string }> {
+  if (settings.customApiUrl.trim() && settings.customApiKey.trim()) {
+    await callDirectImageApi({ model: "nanobanana-2", prompt: "ping" }, settings);
+    return { ok: true, message: "图片 API 连接成功" };
+  }
   if (!supabase || !hasSupabaseConfig) {
-    throw new Error("当前环境未配置 Supabase，安装版请优先通过自定义图片 API 使用生图功能。")
+    throw new Error("请先填写图片 API URL 和 Key");
   }
   const customHeaders = getCustomApiHeaders(settings);
   const { data, error } = await supabase.functions.invoke("generate", {
@@ -86,10 +150,11 @@ export async function testImageApiConnection(settings = loadSettings()): Promise
 }
 
 export async function callGenerateApi(body: Record<string, any>): Promise<any> {
+  const settings = loadSettings();
   if (!supabase || !hasSupabaseConfig) {
-    throw new Error("当前环境未配置 Supabase，无法直接调用内置生成函数。请先配置图片 API。")
+    return callDirectImageApi(body, settings);
   }
-  const customHeaders = getCustomApiHeaders();
+  const customHeaders = getCustomApiHeaders(settings);
   const { data, error } = await supabase.functions.invoke("generate", {
     body,
     headers: customHeaders,

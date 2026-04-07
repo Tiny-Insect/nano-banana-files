@@ -1,0 +1,25 @@
+appId: com.lumendust.app
+productName: LumenDust
+directories:
+  output: release
+files:
+  - dist/**/*
+  - electron/**/*
+  - public/icon.png
+  - public/icon.ico
+asar: true
+publish:
+  provider: github
+  owner: Tiny-Insect
+  repo: nano-banana-files
+nsis:
+  oneClick: false
+  allowToChangeInstallationDirectory: true
+  perMachine: false
+  createDesktopShortcut: true
+  createStartMenuShortcut: true
+  artifactName: LumenDust-Setup-${version}.${ext}
+win:
+  target:
+    - nsis
+  icon: public/icon.ico

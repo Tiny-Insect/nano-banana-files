@@ -362,6 +362,43 @@ export async function runImageAssistantOptimization(userInput: string, context: 
   return parseOptimizationResult(extractTextFromOpenAICompatible(data));
 }
 
+export async function runGeneralAssistantChat(userInput: string, signal?: AbortSignal, settings?: AppSettings): Promise<string> {
+  const { baseUrl, apiKey, provider, configuredModel } = resolveAssistantBase(settings);
+
+  if (provider === "google") {
+    const model = configuredModel || "gemini-3.1-pro";
+    const data = await withRetry(() => postJson(`${baseUrl}/v1beta/models/${model}:generateContent`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "x-goog-api-key": apiKey,
+      },
+      signal,
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: userInput }] }],
+      }),
+    }), signal);
+    return extractTextFromGoogleResponse(data) || "";
+  }
+
+  const model = configuredModel || (provider === "kimi" ? "kimi-k2.5" : provider === "minimax" ? "MiniMax-M2.7" : "gpt-5.4");
+  const url = provider === "minimax" ? `${baseUrl}/v1/text/chatcompletion_v2` : `${baseUrl}/v1/chat/completions`;
+  const data = await withRetry(() => postJson(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+    },
+    signal,
+    body: JSON.stringify({
+      model,
+      messages: [{ role: "user", content: userInput }],
+      temperature: 0.7,
+    }),
+  }), signal);
+  return provider === "minimax" ? extractTextFromMiniMax(data) : extractTextFromOpenAICompatible(data);
+}
+
 export async function testAssistantConnection(signal?: AbortSignal, settings?: AppSettings): Promise<{ ok: true; provider: string; model: string; message: string }> {
   const { baseUrl, apiKey, provider, configuredModel } = resolveAssistantBase(settings);
 

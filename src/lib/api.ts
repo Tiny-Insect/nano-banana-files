@@ -87,34 +87,115 @@ async function callDirectImageApi(body: Record<string, any>, settings = loadSett
     const parts: any[] = [];
     if (body.prompt) parts.push({ text: body.prompt });
     for (const url of body.image_urls || []) {
-      const imgResp = await fetch(url);
-      const buf = await imgResp.arrayBuffer();
-      const bytes = new Uint8Array(buf);
-      let binary = "";
-      for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
-      const b64 = btoa(binary);
-      const ct = imgResp.headers.get("content-type") || "image/jpeg";
-      parts.push({ inlineData: { mimeType: ct, data: b64 } });
+      try {
+        const imgResp = await fetch(url);
+        if (!imgResp.ok) continue;
+        const buf = await imgResp.arrayBuffer();
+        const bytes = new Uint8Array(buf);
+        let binary = "";
+        for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+        const b64 = btoa(binary);
+        const ct = imgResp.headers.get("content-type") || "image/jpeg";
+        parts.push({ inlineData: { mimeType: ct, data: b64 } });
+      } catch {
+        // ignore bad reference image and continue
+      }
     }
     for (const img of body.images || []) {
       const raw = img.startsWith("data:") ? img.split(",")[1] : img;
       parts.push({ inlineData: { mimeType: "image/png", data: raw } });
     }
-    const response = await fetch(`${baseUrl}/v1beta/models/${apiModel}:generateContent`, {
+
+    const imageSizeMap: Record<string, string> = { "1k": "1K", "2k": "2K", "4k": "4K" };
+    const imageSize = imageSizeMap[body.resolution] || "2K";
+    const supportsThinking = apiModel !== "gemini-3-pro-image-preview";
+
+    let requestBody: Record<string, any> = {
+      contents: [{ parts }],
+      generationConfig: {
+        responseModalities: ["TEXT", "IMAGE"],
+        imageConfig: {
+          imageSize,
+          ...(body.aspect_ratio ? { aspectRatio: body.aspect_ratio } : {}),
+        },
+        ...(supportsThinking && body.thinking_level && body.thinking_level !== "none" ? {
+          thinkingConfig: {
+            thinkingLevel: body.thinking_level === "deep" ? "HIGH" : "LOW",
+          },
+        } : {}),
+      },
+      ...(body.web_search ? { tools: [{ googleSearch: {} }] } : {}),
+    };
+
+    const postWithBody = (payload: Record<string, any>) => fetch(`${baseUrl}/v1beta/models/${apiModel}:generateContent`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
-      body: JSON.stringify({ contents: [{ parts }] }),
+      body: JSON.stringify(payload),
     });
+
+    let response = await postWithBody(requestBody);
+    if (!response.ok && response.status === 400) {
+      const variants: Record<string, any>[] = [];
+      const clone = (obj: Record<string, any>) => JSON.parse(JSON.stringify(obj));
+      const noThinking = clone(requestBody);
+      if (noThinking?.generationConfig?.thinkingConfig) {
+        delete noThinking.generationConfig.thinkingConfig;
+        variants.push(noThinking);
+      }
+      const noImageSize = clone(noThinking);
+      if (noImageSize?.generationConfig?.imageConfig?.imageSize) {
+        delete noImageSize.generationConfig.imageConfig.imageSize;
+        variants.push(noImageSize);
+      }
+      const noImageConfig = clone(noImageSize);
+      if (noImageConfig?.generationConfig?.imageConfig) {
+        delete noImageConfig.generationConfig.imageConfig;
+        variants.push(noImageConfig);
+      }
+      for (const variant of variants) {
+        const trial = await postWithBody(variant);
+        if (trial.ok) {
+          response = trial;
+          requestBody = variant;
+          break;
+        }
+      }
+    }
+
     if (!response.ok) throw new Error(await response.text());
     return response.json();
   }
 
+  const imageSize = body.resolution === "4k" ? "4K" : body.resolution === "2k" ? "2K" : "1K";
+  const contentParts: any[] = [];
+  if (body.prompt) contentParts.push({ type: "text", text: body.prompt });
+  for (const url of body.image_urls || []) {
+    contentParts.push({ type: "image_url", image_url: { url } });
+  }
+  for (const img of body.images || []) {
+    const prefix = img.startsWith("data:") ? img : `data:image/png;base64,${img}`;
+    contentParts.push({ type: "image_url", image_url: { url: prefix } });
+  }
   const response = await fetch(`${baseUrl}/v1/chat/completions`, {
     method: "POST",
     headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` },
     body: JSON.stringify({
       model: apiModel,
-      messages: [{ role: "user", content: body.prompt || "Generate image" }],
+      messages: [{ role: "user", content: contentParts.length > 0 ? contentParts : [{ type: "text", text: body.prompt || "Generate image" }] }],
+      modalities: ["text", "image"],
+      image_config: {
+        ...(body.resolution ? { image_size: imageSize } : {}),
+        ...(body.aspect_ratio ? { aspect_ratio: body.aspect_ratio } : {}),
+      },
+      generation_config: {
+        response_modalities: ["Text", "Image"],
+        image_generation_config: {
+          ...(body.resolution ? { image_size: imageSize } : {}),
+          ...(body.aspect_ratio ? { aspect_ratio: body.aspect_ratio } : {}),
+        },
+      },
+      ...(body.web_search ? { web_search: true } : {}),
+      ...(body.thinking_level && body.thinking_level !== "none" ? { thinking_level: body.thinking_level } : {}),
       stream: false,
     }),
   });

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { type AppSettings, loadSettings, saveSettings } from "@/components/Layout";
 import { testImageApiConnection } from "@/lib/api";
 import { formatAssistantErrorMessage, getAssistantRuntimeInfo, testAssistantConnection } from "@/lib/assistant-api";
+import { appLog, appLogError } from "@/lib/app-log";
 
 export default function SettingsPanel() {
   const [settings, setSettings] = useState<AppSettings>(() => loadSettings());
@@ -35,6 +36,7 @@ export default function SettingsPanel() {
   const runtimeInfo = getAssistantRuntimeInfo(settings);
 
   const handleSave = () => {
+    appLog("settings.save");
     saveSettings(settings);
     setSaved(true);
     window.dispatchEvent(new Event("settings-updated"));
@@ -114,7 +116,9 @@ export default function SettingsPanel() {
                       try {
                         const result = await testImageApiConnection(settings);
                         setImageApiTestMessage(result.message);
+                        appLog("settings.testImageApi success");
                       } catch (error: any) {
+                        appLogError("settings.testImageApi", error);
                         setImageApiTestMessage(error?.message || "图片 API 连接失败");
                       } finally {
                         setTestingImageApi(false);
@@ -168,8 +172,10 @@ export default function SettingsPanel() {
                     setAssistantTestMessage("");
                     try {
                       const result = await testAssistantConnection(undefined, settings);
+                      appLog("settings.testAssistant success");
                       setAssistantTestMessage(`已连接：${result.provider} / ${result.model}`);
                     } catch (error) {
+                      appLogError("settings.testAssistant", error);
                       setAssistantTestMessage(formatAssistantErrorMessage(error, settings));
                     } finally {
                       setTestingAssistant(false);

@@ -5,6 +5,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Textarea } from "@/components/ui/textarea";
 import { useAssistantStore, type AssistantContextSnapshot } from "@/lib/assistant-store";
 import { formatAssistantErrorMessage, getAssistantRuntimeInfo, runGeneralAssistantChat, runImageAssistantOptimization } from "@/lib/assistant-api";
+import { appLog, appLogError } from "@/lib/app-log";
 
 interface AssistantSidebarProps {
   snapshot: AssistantContextSnapshot;
@@ -51,6 +52,7 @@ export default function AssistantSidebar({ snapshot, onApplySuggestion, onWriteP
   const submit = async (action: "suggest_only" | "apply" | "apply_and_generate", intent: "chat" | "optimize" = "chat") => {
     if (!activeSession || !input.trim() || busy) return;
     const userText = input.trim();
+    appLog(`assistant.submit intent=${intent} session=${activeSession.id}`);
     appendMessage(activeSession.id, { role: "user", content: userText });
     setInput("");
     setBusy(true);
@@ -60,6 +62,7 @@ export default function AssistantSidebar({ snapshot, onApplySuggestion, onWriteP
       try {
         if (intent === "chat") {
           const reply = await runGeneralAssistantChat(userText, controller.signal);
+          appLog(`assistant.chat.reply length=${reply?.length || 0}`);
           appendMessage(activeSession.id, { role: "assistant", content: reply || "（未返回内容）" });
           return;
         }
@@ -94,6 +97,7 @@ export default function AssistantSidebar({ snapshot, onApplySuggestion, onWriteP
         });
         return;
       } catch (error: any) {
+        appLogError(`assistant.${intent}`, error);
         if (controller.signal.aborted) {
           appendMessage(activeSession.id, { role: "system", content: "已停止本次回复" });
           return;

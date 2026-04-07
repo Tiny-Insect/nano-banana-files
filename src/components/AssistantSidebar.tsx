@@ -4,8 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Textarea } from "@/components/ui/textarea";
 import { useAssistantStore, type AssistantContextSnapshot } from "@/lib/assistant-store";
-import { formatAssistantErrorMessage, getAssistantRuntimeInfo, runImageAssistantOptimization } from "@/lib/assistant-api";
-import type { ImageOptimizationContext } from "@/lib/image-assistant-protocol";
+import { formatAssistantErrorMessage, getAssistantRuntimeInfo, runGeneralAssistantChat, runImageAssistantOptimization } from "@/lib/assistant-api";
 
 interface AssistantSidebarProps {
   snapshot: AssistantContextSnapshot;
@@ -20,26 +19,8 @@ interface AssistantSidebarProps {
   onClose: () => void;
 }
 
-function buildAssistantReply(input: string, snapshot: AssistantContextSnapshot): string {
-  const context: ImageOptimizationContext = {
-    prompt: snapshot.prompt,
-    model: snapshot.model,
-    aspectRatio: snapshot.aspectRatio,
-    resolution: snapshot.resolution,
-    referenceCount: snapshot.referenceCount,
-    webSearch: snapshot.webSearch,
-    thinkingLevel: snapshot.thinkingLevel,
-  };
-
-  const lower = input.toLowerCase();
-
-  if (lower.includes("为什么") || lower.includes("不对") || lower.includes("问题") || lower.includes("bug") || lower.includes("排查")) {
-    if (!snapshot.prompt.trim() && snapshot.referenceCount === 0) {
-      return "你当前还没有输入提示词，也没有添加参考图。先给我一句目标描述，或者先放一张参考图，我再帮你细化。";
-    }
-  }
-
-  return "我会基于你当前的画面需求、模型、比例和参考图情况，帮你整理成更适合出图的提示词。";
+function buildAssistantReply(input: string): string {
+  return `我收到了：${input}`;
 }
 
 function formatSessionTime(timestamp: number): string {
@@ -76,10 +57,16 @@ export default function AssistantSidebar({ snapshot, onApplySuggestion, onWriteP
     const controller = new AbortController();
     requestControllerRef.current = controller;
     try {
-      const fallbackReply = buildAssistantReply(userText, snapshot);
+      const fallbackReply = buildAssistantReply(userText);
       let reply = fallbackReply;
       try {
-        const result = await runImageAssistantOptimization(intent === "optimize" ? `请专注做提示词优化：${userText}` : userText, {
+        if (intent === "chat") {
+          reply = await runGeneralAssistantChat(userText, controller.signal) || fallbackReply;
+          appendMessage(activeSession.id, { role: "assistant", content: reply });
+          return;
+        }
+
+        const result = await runImageAssistantOptimization(`请专注做提示词优化：${userText}`, {
           prompt: snapshot.prompt,
           model: snapshot.model,
           aspectRatio: snapshot.aspectRatio,

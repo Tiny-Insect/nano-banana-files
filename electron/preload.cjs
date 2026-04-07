@@ -24,6 +24,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
   fsReadDir: (dirPath) => ipcRenderer.invoke("fs-read-dir", dirPath),
   fsGetSize: (dirPath) => ipcRenderer.invoke("fs-get-size", dirPath),
   fsMkdir: (dirPath) => ipcRenderer.invoke("fs-mkdir", dirPath),
+  log: (message) => ipcRenderer.invoke("app-log", message),
 
   // Auto update
   getUpdateStatus: () => ipcRenderer.invoke("update-get-status"),

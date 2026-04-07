@@ -391,6 +391,12 @@ app.whenReady().then(() => {
     }
   });
 
+  ipcMain.handle("app-log", async (_event, message) => {
+    appendAppLog(`[renderer] ${message}`);
+    return true;
+  });
+
+
   createWindow();
 
   mainWindow.on("maximize", () => mainWindow.webContents.send("window-maximized"));

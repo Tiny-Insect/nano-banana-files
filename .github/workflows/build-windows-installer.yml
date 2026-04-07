@@ -23,18 +23,21 @@ jobs:
       - name: Install dependencies
         run: npm install
 
-      - name: Build installer
+      - name: Build installer (manual)
+        if: github.event_name == 'workflow_dispatch'
         run: npm run desktop:build
 
+      - name: Build and publish updater files (release)
+        if: github.event_name == 'release'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: npm run desktop:release
+
       - name: Upload installer artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: lumendust-windows-installer
-          path: release/*.exe
+          path: |
+            release/*.exe
+            release/latest*.yml
           if-no-files-found: error
-
-      - name: Attach installer to release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v2
-        with:
-          files: release/*.exe

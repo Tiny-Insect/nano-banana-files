@@ -114,8 +114,16 @@ function setupAutoUpdater() {
   });
 
   autoUpdater.on("error", (error) => {
-    updateState = { ...updateState, status: "error", message: error?.message || "更新失败" };
+    const rawMessage = error?.message || "更新失败";
+    const lower = rawMessage.toLowerCase();
+    const friendly = lower.includes("latest.yml")
+      ? "当前 Release 里还没有 latest.yml 更新清单，请先用 Release 触发完整发布。"
+      : lower.includes("404")
+        ? "更新源未找到，请检查 GitHub Release 资源是否完整。"
+        : rawMessage;
+    updateState = { ...updateState, status: "error", message: friendly };
     sendUpdateState();
+    appendAppLog(`[updater-error] ${rawMessage}`);
   });
 }
 
@@ -133,11 +141,11 @@ function createWindow() {
     frame: false,
     titleBarStyle: "hidden",
     titleBarOverlay: process.platform === "win32" ? {
-      color: "#0a0a0a",
-      symbolColor: "#888",
+      color: "#111111",
+      symbolColor: "#c9c9c9",
       height: 36,
     } : undefined,
-    backgroundColor: "#0a0a0a",
+    backgroundColor: "#111111",
     icon: path.join(__dirname, "../public/icon.png"),
     webPreferences: {
       preload: path.join(__dirname, "preload.cjs"),

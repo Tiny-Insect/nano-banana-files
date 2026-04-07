@@ -43,6 +43,7 @@ export default function Assets() {
   const [columnSize, setColumnSize] = useState(50);
   const [deleteConfirmImage, setDeleteConfirmImage] = useState<AssetImage | null>(null);
   const [reGeneratingTaskId, setReGeneratingTaskId] = useState<string | null>(null);
+  const [showClearFailedConfirm, setShowClearFailedConfirm] = useState(false);
 
   const images: AssetImage[] = useMemo(() => {
     return tasks
@@ -298,6 +299,17 @@ export default function Assets() {
         )}
       </div>
 
+      {tasks.some((t) => t.status === "error") && (
+        <Button
+          size="sm"
+          variant="outline"
+          className="fixed bottom-6 left-6 z-40 h-9 px-3 text-xs border-destructive/25 text-destructive/80 hover:bg-destructive/10 hover:text-destructive"
+          onClick={() => setShowClearFailedConfirm(true)}
+        >
+          清理失败任务
+        </Button>
+      )}
+
       {selectedImage && lightboxImage && (
         <ImageLightbox
           image={lightboxImage}
@@ -372,6 +384,39 @@ export default function Assets() {
           </div>
         );
       })()}
+
+      {showClearFailedConfirm && (
+        <div className="fixed inset-0 z-[110] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-150" onClick={() => setShowClearFailedConfirm(false)}>
+          <div className="bg-card border border-border/50 rounded-xl p-5 max-w-sm w-full mx-4 shadow-2xl animate-in zoom-in-95 duration-150" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center shrink-0">
+                <AlertTriangle className="w-4 h-4 text-destructive" />
+              </div>
+              <div>
+                <p className="text-sm font-medium">删除所有失败任务</p>
+                <p className="text-xs text-muted-foreground mt-0.5">将移除 {tasks.filter((t) => t.status === "error").length} 个失败任务，不影响已完成的任务</p>
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" size="sm" className="h-8 px-4 text-xs" onClick={() => setShowClearFailedConfirm(false)}>
+                取消
+              </Button>
+              <Button
+                variant="destructive"
+                size="sm"
+                className="h-8 px-4 text-xs"
+                onClick={() => {
+                  setTasks((prev) => prev.filter((t) => t.status !== "error"));
+                  setShowClearFailedConfirm(false);
+                  toast({ title: "已删除所有失败任务" });
+                }}
+              >
+                删除
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
     </Layout>
   );
 }

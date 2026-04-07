@@ -15,6 +15,13 @@ function getNamedDataDir(name) {
   return dir;
 }
 
+function appendAppLog(message) {
+  try {
+    const logFile = path.join(getNamedDataDir("logs"), "main.log");
+    fs.appendFileSync(logFile, `[${new Date().toISOString()}] ${message}\n`);
+  } catch {}
+}
+
 // Prevent multiple instances
 const gotLock = app.requestSingleInstanceLock();
 if (!gotLock) {
@@ -114,6 +121,7 @@ function setupAutoUpdater() {
 
 function createWindow() {
   const state = loadWindowState();
+  appendAppLog(`createWindow start, dev=${!!process.env.VITE_DEV_SERVER_URL}`);
 
   mainWindow = new BrowserWindow({
     width: state.width,
@@ -145,6 +153,7 @@ function createWindow() {
   }
 
   mainWindow.once("ready-to-show", () => {
+    appendAppLog("ready-to-show");
     mainWindow.show();
   });
 
@@ -160,10 +169,24 @@ function createWindow() {
   });
 
   mainWindow.webContents.on("did-fail-load", (_event, code, description) => {
+    appendAppLog(`[did-fail-load] code=${code} description=${description}`);
     console.error("[main] did-fail-load:", code, description);
   });
 
+  mainWindow.webContents.on("did-finish-load", () => {
+    appendAppLog("did-finish-load");
+  });
+
+  mainWindow.webContents.on("dom-ready", () => {
+    appendAppLog("dom-ready");
+  });
+
+  mainWindow.webContents.on("console-message", (_event, level, message, line, sourceId) => {
+    appendAppLog(`[console:${level}] ${message} (${sourceId}:${line})`);
+  });
+
   mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    appendAppLog(`[render-process-gone] reason=${details?.reason || "unknown"} exitCode=${details?.exitCode ?? ""}`);
     console.error("[main] render-process-gone:", details);
   });
 
@@ -182,7 +205,16 @@ app.on("second-instance", () => {
   }
 });
 
+process.on("uncaughtException", (error) => {
+  appendAppLog(`[uncaughtException] ${error?.stack || error?.message || error}`);
+});
+
+process.on("unhandledRejection", (error) => {
+  appendAppLog(`[unhandledRejection] ${error instanceof Error ? error.stack || error.message : String(error)}`);
+});
+
 app.whenReady().then(() => {
+  appendAppLog("app.whenReady");
   setupAutoUpdater();
   // Register custom protocol handler to serve local files
   // URL format: local-file://serve/<absolute-path>

@@ -353,13 +353,6 @@ app.whenReady().then(() => {
 
   createWindow();
 
-  if (!process.env.VITE_DEV_SERVER_URL) {
-    autoUpdater.checkForUpdates().catch((error) => {
-      updateState = { ...updateState, status: "error", message: error?.message || "检查更新失败" };
-      sendUpdateState();
-    });
-  }
-
   mainWindow.on("maximize", () => mainWindow.webContents.send("window-maximized"));
   mainWindow.on("unmaximize", () => mainWindow.webContents.send("window-unmaximized"));
 });

@@ -3,7 +3,7 @@
  * Eliminates duplication between Home.tsx and Assets.tsx.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, hasSupabaseConfig } from "@/integrations/supabase/client";
 import { loadSettings } from "@/components/Layout";
 import { getStorage } from "@/lib/storage-factory";
 import type { GenerationTask } from "@/lib/generation-store";
@@ -63,6 +63,9 @@ export function getCustomApiHeaders(settings = loadSettings()): Record<string, s
 }
 
 export async function testImageApiConnection(settings = loadSettings()): Promise<{ ok: true; message: string }> {
+  if (!supabase || !hasSupabaseConfig) {
+    throw new Error("当前环境未配置 Supabase，安装版请优先通过自定义图片 API 使用生图功能。")
+  }
   const customHeaders = getCustomApiHeaders(settings);
   const { data, error } = await supabase.functions.invoke("generate", {
     body: {
@@ -83,6 +86,9 @@ export async function testImageApiConnection(settings = loadSettings()): Promise
 }
 
 export async function callGenerateApi(body: Record<string, any>): Promise<any> {
+  if (!supabase || !hasSupabaseConfig) {
+    throw new Error("当前环境未配置 Supabase，无法直接调用内置生成函数。请先配置图片 API。")
+  }
   const customHeaders = getCustomApiHeaders();
   const { data, error } = await supabase.functions.invoke("generate", {
     body,

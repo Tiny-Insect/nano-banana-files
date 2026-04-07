@@ -4,7 +4,7 @@
  * This is the active implementation for the web/browser version.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, hasSupabaseConfig } from "@/integrations/supabase/client";
 import { createThumbnail } from "@/lib/generation-store";
 import type { StorageAdapter, StoredImage, StorageConfig } from "./storage-adapter";
 import { getStorageConfig } from "./storage-adapter";
@@ -105,6 +105,9 @@ export class WebStorage implements StorageAdapter {
   }
 
   async saveGeneratedImage(blob: Blob, mimeType: string): Promise<StoredImage> {
+    if (!supabase || !hasSupabaseConfig) {
+      throw new Error("当前环境未配置 Supabase，无法使用网页版存储。")
+    }
     const ext = mimeType.includes("jpeg") ? "jpg" : mimeType.split("/")[1] || "png";
     const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 

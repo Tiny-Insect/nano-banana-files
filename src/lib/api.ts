@@ -283,6 +283,46 @@ export async function callGenerateApi(body: Record<string, any>): Promise<any> {
     }
   }
 
+  const saveRemoteOrBase64Image = async (value: string, mimeType = "image/png") => {
+    const dataUrl = value.startsWith("data:") ? value : `data:${mimeType};base64,${value}`;
+    try {
+      const blob = await fetch(dataUrl).then(r => r.blob());
+      const stored = await storage.saveGeneratedImage(blob, mimeType);
+      images.push(stored.originalUrl);
+      thumbnails.push(stored.thumbnailUrl);
+    } catch {
+      images.push(dataUrl);
+      thumbnails.push(dataUrl);
+    }
+  };
+
+  if (Array.isArray(data?.data)) {
+    for (const item of data.data) {
+      if (item?.b64_json) {
+        await saveRemoteOrBase64Image(item.b64_json, "image/png");
+      } else if (item?.url) {
+        images.push(item.url);
+        thumbnails.push(item.url);
+      }
+    }
+  }
+
+  if (data?.choices?.[0]?.message?.content) {
+    const content = data.choices[0].message.content;
+    const parts = Array.isArray(content) ? content : [content];
+    for (const part of parts) {
+      if (typeof part === "object") {
+        if (part?.image_url?.url) {
+          images.push(part.image_url.url);
+          thumbnails.push(part.image_url.url);
+        }
+        if (part?.b64_json) {
+          await saveRemoteOrBase64Image(part.b64_json, "image/png");
+        }
+      }
+    }
+  }
+
   if (images.length > 0) return { images, thumbnails };
   return { error: "未返回图片", raw: data };
 }

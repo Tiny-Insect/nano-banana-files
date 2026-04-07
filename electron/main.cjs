@@ -159,6 +159,14 @@ function createWindow() {
     return { action: "deny" };
   });
 
+  mainWindow.webContents.on("did-fail-load", (_event, code, description) => {
+    console.error("[main] did-fail-load:", code, description);
+  });
+
+  mainWindow.webContents.on("render-process-gone", (_event, details) => {
+    console.error("[main] render-process-gone:", details);
+  });
+
   if (process.env.VITE_DEV_SERVER_URL) {
     mainWindow.loadURL(process.env.VITE_DEV_SERVER_URL);
     mainWindow.webContents.openDevTools({ mode: "detach" });
@@ -175,6 +183,7 @@ app.on("second-instance", () => {
 });
 
 app.whenReady().then(() => {
+  setupAutoUpdater();
   // Register custom protocol handler to serve local files
   // URL format: local-file://serve/<absolute-path>
   protocol.handle("local-file", (request) => {
@@ -344,16 +353,21 @@ app.whenReady().then(() => {
 
   createWindow();
 
+  if (!process.env.VITE_DEV_SERVER_URL) {
+    autoUpdater.checkForUpdates().catch((error) => {
+      updateState = { ...updateState, status: "error", message: error?.message || "检查更新失败" };
+      sendUpdateState();
+    });
+  }
+
   mainWindow.on("maximize", () => mainWindow.webContents.send("window-maximized"));
   mainWindow.on("unmaximize", () => mainWindow.webContents.send("window-unmaximized"));
 });
 
 app.on("activate", () => {
   if (BrowserWindow.getAllWindows().length === 0) {
-  setupAutoUpdater();
-  createWindow();
-  sendUpdateState();
-
+    createWindow();
+    sendUpdateState();
   }
 });
 

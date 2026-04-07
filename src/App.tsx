@@ -7,11 +7,13 @@ import { HashRouter, Routes, Route } from "react-router-dom";
 import { queryClient } from "@/lib/queryClient";
 import { GenerationProvider } from "@/lib/generation-store";
 import { AssistantProvider } from "@/lib/assistant-store";
+import ErrorBoundary from "@/components/ErrorBoundary";
 import Home from "@/pages/Home";
 import Assets from "@/pages/Assets";
 import RecentlyDeleted from "@/pages/RecentlyDeleted";
 import NotFound from "./pages/NotFound";
 import { useEffect } from "react";
+import { appLog } from "@/lib/app-log";
 
 const THEME_KEY = "lumendust_theme";
 
@@ -41,28 +43,44 @@ function App() {
     const theme = getInitialTheme();
     document.documentElement.classList.remove("dark", "light");
     document.documentElement.classList.add(theme);
+
+    const onError = (event: ErrorEvent) => {
+      appLog(`window.error: ${event.message} (${event.filename}:${event.lineno}:${event.colno})`);
+    };
+    const onRejection = (event: PromiseRejectionEvent) => {
+      const reason = event.reason instanceof Error ? event.reason.stack || event.reason.message : String(event.reason);
+      appLog(`window.unhandledrejection: ${reason}`);
+    };
+    window.addEventListener("error", onError);
+    window.addEventListener("unhandledrejection", onRejection);
+    return () => {
+      window.removeEventListener("error", onError);
+      window.removeEventListener("unhandledrejection", onRejection);
+    };
   }, []);
 
   return (
-    <QueryClientProvider client={queryClient}>
-      <GenerationProvider>
-        <AssistantProvider>
-          <TooltipProvider>
-            <StarField />
-            <Toaster />
-            <DownloadNotificationHost />
-            <HashRouter>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/assets" element={<Assets />} />
-                <Route path="/trash" element={<RecentlyDeleted />} />
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </HashRouter>
-          </TooltipProvider>
-        </AssistantProvider>
-      </GenerationProvider>
-    </QueryClientProvider>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <GenerationProvider>
+          <AssistantProvider>
+            <TooltipProvider>
+              <StarField />
+              <Toaster />
+              <DownloadNotificationHost />
+              <HashRouter>
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/assets" element={<Assets />} />
+                  <Route path="/trash" element={<RecentlyDeleted />} />
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </HashRouter>
+            </TooltipProvider>
+          </AssistantProvider>
+        </GenerationProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
 

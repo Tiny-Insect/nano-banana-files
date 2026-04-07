@@ -6,7 +6,6 @@ files:
   - dist/**/*
   - electron/**/*
   - public/icon.png
-  - public/icon.ico
 asar: true
 publish:
   provider: github
@@ -22,4 +21,4 @@ nsis:
 win:
   target:
     - nsis
-  icon: public/icon.ico
+  icon: public/icon.png

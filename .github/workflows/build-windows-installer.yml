@@ -24,6 +24,17 @@ jobs:
         run: npm install
 
       - name: Build installer
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: npm run desktop:release
+        run: npm run desktop:build
+
+      - name: Upload installer artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lumendust-windows-installer
+          path: release/*.exe
+          if-no-files-found: error
+
+      - name: Attach installer to release
+        if: github.event_name == 'release'
+        uses: softprops/action-gh-release@v2
+        with:
+          files: release/*.exe

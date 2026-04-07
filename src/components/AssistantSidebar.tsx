@@ -57,15 +57,15 @@ export default function AssistantSidebar({ snapshot, onApplySuggestion, onWriteP
     const controller = new AbortController();
     requestControllerRef.current = controller;
     try {
-      const fallbackReply = buildAssistantReply(userText);
-      let reply = fallbackReply;
       try {
         if (intent === "chat") {
-          reply = await runGeneralAssistantChat(userText, controller.signal) || fallbackReply;
-          appendMessage(activeSession.id, { role: "assistant", content: reply });
+          const reply = await runGeneralAssistantChat(userText, controller.signal);
+          appendMessage(activeSession.id, { role: "assistant", content: reply || "（未返回内容）" });
           return;
         }
 
+        const fallbackReply = buildAssistantReply(userText);
+        let reply = fallbackReply;
         const result = await runImageAssistantOptimization(`请专注做提示词优化：${userText}`, {
           prompt: snapshot.prompt,
           model: snapshot.model,
@@ -75,6 +75,7 @@ export default function AssistantSidebar({ snapshot, onApplySuggestion, onWriteP
           webSearch: snapshot.webSearch,
           thinkingLevel: snapshot.thinkingLevel,
         }, controller.signal);
+
         reply = result.reply || fallbackReply;
         if (action !== "suggest_only") {
           const instruction = result.optimizedPrompt || userText;
